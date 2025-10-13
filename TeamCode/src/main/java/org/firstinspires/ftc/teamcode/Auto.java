@@ -1,19 +1,40 @@
 package org.firstinspires.ftc.teamcode;
 
+import static com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.*;
+
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
 // import com.qualcomm.robotcore.hardware.Servo; // Uncomment if you add servos back
 
 @Autonomous(name = "Auto")
 public class Auto extends LinearOpMode {
+    static final double WHEEL_RADIUS = 0.048;     // meters (e.g., 48 mm wheels)
+    static final int TICKS_PER_REV = 1120;        // goBilda 5202 encoders
+    static final double GEAR_RATIO = 1.0;         // motor revs / wheel revs
+    static final double Lx = 0.15;                // meters, half length (front-back)
+    static final double Ly = 0.15;
+    static final double L = Lx + Ly;              // effective radius// meters, half width (side-to-side)
+
+    double x = 0.0;      // meters
+    double y = 0.0;      // meters
+    double theta = 0.0;  // radians
+
+    // Previous encoder positions
+    int prevFL = 0, prevFR = 0, prevBR = 0, prevBL = 0;
 
     // 1. Declare motor variables (do NOT initialize them to null)
     private DcMotor leftFrontDrive;
     private DcMotor rightFrontDrive;
     private DcMotor leftBackDrive;
     private DcMotor rightBackDrive;
+    private DcMotor launchMotor;
+    private DcMotor leftIntakeMotor;
+    private DcMotor rightIntakeMotor;
+    private Servo rightServo;
+    private Servo leftServo;
 
     // private DcMotor launchMotor; // Uncomment when you are ready to use them
     // private Servo rightServo;
@@ -36,22 +57,33 @@ public class Auto extends LinearOpMode {
         rightFrontDrive = hardwareMap.get(DcMotor.class, "rightFrontDrive");
         leftBackDrive = hardwareMap.get(DcMotor.class, "leftBackDrive");
         rightBackDrive = hardwareMap.get(DcMotor.class, "rightBackDrive");
+        rightIntakeMotor = hardwareMap.get(DcMotor.class, "rightIntake");
+        leftIntakeMotor = hardwareMap.get(DcMotor.class, "leftIntake");
+
+
 
         // --- 3. Set Motor Directions ---
         // This depends on your robot's build. You may need to reverse some of these.
         // A common mecanum setup is to reverse the motors on one side.
-        leftFrontDrive.setDirection(DcMotorSimple.Direction.REVERSE);
-        leftBackDrive.setDirection(DcMotorSimple.Direction.REVERSE);
-        rightFrontDrive.setDirection(DcMotorSimple.Direction.FORWARD);
-        rightBackDrive.setDirection(DcMotorSimple.Direction.FORWARD);
+        leftFrontDrive.setDirection(REVERSE);
+        leftBackDrive.setDirection(REVERSE);
+        rightFrontDrive.setDirection(FORWARD);
+        rightBackDrive.setDirection(FORWARD);
+        leftIntakeMotor.setDirection(FORWARD);
+        rightIntakeMotor.setDirection(REVERSE);
 
-        // --- 4. Set Motor Run Modes and Behavior ---
-        // Reset encoders to ensure they start at 0
-        setMotorMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        // Set motors to run based on power level (good for simple time-based driving)
-        setMotorMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        // Set motors to brake when power is 0 to prevent coasting
-        setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftIntakeMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightIntakeMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        leftFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // Signal that initialization is complete
         telemetry.addData("Status", "Initialized and ready to run");
@@ -62,7 +94,13 @@ public class Auto extends LinearOpMode {
 
         // --- 5. AUTONOMOUS SEQUENCE ---
         // The code below this line runs after START is pressed.
-        if (opModeIsActive()) {
+        while (opModeIsActive()) {
+            updateOdometry();
+
+            telemetry.addData("x (m)", x);
+            telemetry.addData("y (m)", y);
+            telemetry.addData("theta (deg)", Math.toDegrees(theta));
+            telemetry.update();
             // Example: Drive forward for 2 seconds
             driveForward(DRIVE_SPEED, 2000);
 
@@ -164,6 +202,89 @@ public class Auto extends LinearOpMode {
 
         stopDriving();
     }
+    private void updateOdometry() {
+        // Current encoder ticks
+        int currFL = leftFrontDrive.getCurrentPosition();
+        int currFR = rightFrontDrive.getCurrentPosition();
+        int currBR = rightBackDrive.getCurrentPosition();
+        int currBL = leftBackDrive.getCurrentPosition();
+
+        // Δticks
+        int dFL = currFL - prevFL;
+        int dFR = currFR - prevFR;
+        int dBR = currBR - prevBR;
+        int dBL = currBL - prevBL;
+
+        // Save for next loop
+        prevFL = currFL;
+        prevFR = currFR;
+        prevBR = currBR;
+        prevBL = currBL;
+
+        // Convert ticks → distance (meters)
+        double distFL = ticksToMeters(dFL);
+        double distFR = ticksToMeters(dFR);
+        double distBR = ticksToMeters(dBR);
+        double distBL = ticksToMeters(dBL);
+
+        // Body-frame increments
+        double dx_b = (distFL + distFR + distBR + distBL) / 4.0;
+        double dy_b = (-distFL + distFR + distBR - distBL) / 4.0;
+        double dTheta = (-distFL + distFR - distBR + distBL) / (4.0 * L);
+
+        // Rotate into world frame (using midpoint heading for accuracy)
+        double headingMid = theta + dTheta / 2.0;
+        double dx_w = dx_b * Math.cos(headingMid) - dy_b * Math.sin(headingMid);
+        double dy_w = dx_b * Math.sin(headingMid) + dy_b * Math.cos(headingMid);
+
+        // Update global pose
+        x += dx_w;
+        y += dy_w;
+        theta += dTheta;
+
+        // Keep theta in [-pi, pi] for cleanliness
+        theta = Math.atan2(Math.sin(theta), Math.cos(theta));
+    }
+
+    private double ticksToMeters(int dticks) {
+        double wheelRevs = (dticks / (double) TICKS_PER_REV) / GEAR_RATIO;
+        return wheelRevs * 2.0 * Math.PI * WHEEL_RADIUS;
+    }
+    private void launchMotor (long timeMS) {
+        launchMotor = hardwareMap.get(DcMotor.class, "launchMotor");
+
+        launchMotor.setDirection(FORWARD);
+
+        launchMotor.setPower(0.42);
+        sleep(timeMS);
+        launchMotor.setPower(0);
+    }
+    private void launchServo () {
+        leftServo = hardwareMap.get(Servo.class, "leftServo");
+        rightServo = hardwareMap.get(Servo.class, "rightServo");
+
+
+        leftServo.setDirection(Servo.Direction.FORWARD);
+        rightServo.setDirection(Servo.Direction.REVERSE);
+
+        leftServo.setPosition(1);
+        rightServo.setPosition(1);
+        sleep(3000);
+        leftServo.setPosition(0);
+        rightServo.setPosition(0);
+
+    }
+    private void launchIntake (long timeMS) {
+        leftIntakeMotor = hardwareMap.get(DcMotor.class, "intakeMotor");
+
+        launchMotor.setDirection(FORWARD);
+
+        launchMotor.setPower(0.42);
+        sleep(timeMS);
+        launchMotor.setPower(0);
+    }
+
+
 
     // You can add more methods here like strafeRight, turnLeft, etc.
 }

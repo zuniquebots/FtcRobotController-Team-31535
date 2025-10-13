@@ -149,7 +149,6 @@ public class MecanumOdometryDemo extends LinearOpMode {
             telemetry.addData("Power", "Drv:%.2f, Str:%.2f, Trn:%.2f",var);
             telemetry.update();
         }
-        //stopRobot(); our own version of stopRobot
 
 
         }

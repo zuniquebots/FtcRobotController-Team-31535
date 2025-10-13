@@ -47,6 +47,7 @@ public class Auto extends LinearOpMode {
     static final double DRIVE_SPEED = 0.5;
     static final double TURN_SPEED = 0.4;
 
+
     @Override
     public void runOpMode() {
         // --- 2. INITIALIZATION PHASE ---
@@ -289,11 +290,81 @@ public class Auto extends LinearOpMode {
     }
 
     private void odometryLoop() {
-        while (opModeIsActive()&& !Thread.currentThread().isInterrupted()) {
+        while (opModeIsActive() && !Thread.currentThread().isInterrupted()) {
             updateOdometry();
         }
 
 
         // You can add more methods here like strafeRight, turnLeft, etc.
     }
+
+    private void Navigation(double targetX, double targetY, double targetTheta) {
+        final double Kp_pos = 2.0;  // Proportional gain for position. Determines how fast the robot tries to correct position errors.
+        final double Kp_turn = 2.5; // Proportional gain for heading. Determines how fast the robot tries to correct heading errors.
+
+        // --- Tolerances (How close is "close enough"?) ---
+        final double posTolerance = 0.02;   // 2 cm
+        final double thetaTolerance = Math.toRadians(2); // 2 degrees
+        while (opModeIsActive()) {
+            // --- Calculate Errors ---
+            // Calculate the distance and angle errors in the world frame.
+            double errorX = targetX - x;
+            double errorY = targetY - y;
+            double errorTheta = targetTheta - theta;
+
+            // Normalize the heading error to be between -PI and PI
+            errorTheta = Math.atan2(Math.sin(errorTheta), Math.cos(errorTheta));
+
+            double distanceError = Math.hypot(errorX, errorY);
+
+            // --- Check for Completion ---
+            // If the robot is within the tolerance circles for both position and heading, we're done.
+            if (distanceError < posTolerance && Math.abs(errorTheta) < thetaTolerance) {
+                stopDriving();
+                telemetry.addData("Status", "Reached target");
+                telemetry.update();
+                break; // Exit the loop
+            }
+
+            // --- Field-Centric to Robot-Centric Transformation ---
+            // We need to translate the world-frame error (where we want to go on the field)
+            // into robot-centric commands (how much to drive forward, strafe, and turn).
+            // This is done by rotating the error vector by the negative of the robot's current heading.
+            double robotX = errorX * Math.cos(-theta) - errorY * Math.sin(-theta);
+            double robotY = errorX * Math.sin(-theta) + errorY * Math.cos(-theta);
+
+
+            // --- Telemetry for Debugging ---
+            telemetry.addData("Target", "X:%.2f, Y:%.2f, H:%.1f", targetX, targetY, Math.toDegrees(targetTheta));
+            telemetry.addData("Current", "X:%.2f, Y:%.2f, H:%.1f", x, y, Math.toDegrees(theta));
+            telemetry.addData("Error", "X:%.2f, Y:%.2f, H:%.1f", distanceError, Math.toDegrees(errorTheta));
+            telemetry.addData("Power", "Drv:%.2f, Str:%.2f, Trn:%.2f", DRIVE_SPEED, DRIVE_SPEED, TURN_SPEED);
+            telemetry.update();
+        }
+    }
+
+    private void setDrivePowers(double drive, double strafe, double turn) {
+        double frontLeftPower = drive + strafe + turn;
+        double frontRightPower = drive - strafe - turn;
+        double backLeftPower = drive - strafe + turn;
+        double backRightPower = drive + strafe - turn;
+
+        // Normalize motor powers if any of them exceed 1.0
+        double max = Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower));
+        max = Math.max(max, Math.abs(backLeftPower));
+        max = Math.max(max, Math.abs(backRightPower));
+
+        if (max > 1.0) {
+            frontLeftPower /= max;
+            frontRightPower /= max;
+            backLeftPower /= max;
+            backRightPower /= max;
+        }
+
+        leftFrontDrive.setPower(frontLeftPower);
+        rightFrontDrive.setPower(frontRightPower);
+        leftBackDrive.setPower(backLeftPower);
+        rightBackDrive.setPower(backRightPower);
+    }
 }
+

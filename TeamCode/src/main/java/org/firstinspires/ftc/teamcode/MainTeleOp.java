@@ -28,7 +28,6 @@ public class MainTeleOp extends LinearOpMode {
     // --- Hardware Declarations ---
     private DcMotor launchMotor;
     private DcMotor leftIntake;
-    private DcMotor rightIntake;
     private Servo rightServo;
     private Servo leftServo;
     private DcMotor leftFrontDrive;
@@ -41,7 +40,6 @@ public class MainTeleOp extends LinearOpMode {
         // --- INITIALIZATION PHASE ---
         // Map all hardware from the robot's configuration
         launchMotor = hardwareMap.get(DcMotor.class, "launchMotor");
-        rightIntake = hardwareMap.get(DcMotor.class, "rightIntakeMotor");
         leftIntake = hardwareMap.get(DcMotor.class, "leftIntakeMotor");
         rightServo = hardwareMap.get(Servo.class, "rightServo");
         leftServo = hardwareMap.get(Servo.class, "leftServo");
@@ -59,15 +57,12 @@ public class MainTeleOp extends LinearOpMode {
 
         launchMotor.setDirection(DcMotor.Direction.FORWARD);
         leftIntake.setDirection(DcMotor.Direction.REVERSE);
-        rightIntake.setDirection(DcMotor.Direction.FORWARD);
-
         rightServo.setDirection(Servo.Direction.REVERSE);
         leftServo.setDirection(Servo.Direction.FORWARD);
 
         // --- SET MOTOR BEHAVIOR ---
         // Set zero power behavior to BRAKE for more immediate stops
         leftIntake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightIntake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         launchMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -126,10 +121,8 @@ public class MainTeleOp extends LinearOpMode {
             // Control intake motors with an if-else statement
             if (isIntakeRunning) {
                 leftIntake.setPower(-1.0);
-                rightIntake.setPower(-1.0);
             } else {
                 leftIntake.setPower(0.0);
-                rightIntake.setPower(0.0);
             }
 
             // --- Telemetry ---
@@ -145,7 +138,6 @@ public class MainTeleOp extends LinearOpMode {
         // Ensure all motors are stopped when the OpMode ends.
         launchMotor.setPower(0);
         leftIntake.setPower(0);
-        rightIntake.setPower(0); // Added missing stop call
         leftFrontDrive.setPower(0);
         rightFrontDrive.setPower(0);
         leftBackDrive.setPower(0);

@@ -32,7 +32,6 @@ public class Auto extends LinearOpMode {
     private DcMotor rightBackDrive;
     private DcMotor launchMotor;
     private DcMotor leftIntakeMotor;
-    private DcMotor rightIntakeMotor;
     private Servo rightServo;
     private Servo leftServo;
 
@@ -57,7 +56,6 @@ public class Auto extends LinearOpMode {
         rightFrontDrive = hardwareMap.get(DcMotor.class, "rightFrontDrive");
         leftBackDrive = hardwareMap.get(DcMotor.class, "leftBackDrive");
         rightBackDrive = hardwareMap.get(DcMotor.class, "rightBackDrive");
-        rightIntakeMotor = hardwareMap.get(DcMotor.class, "rightIntake");
         leftIntakeMotor = hardwareMap.get(DcMotor.class, "leftIntake");
 
 
@@ -70,14 +68,12 @@ public class Auto extends LinearOpMode {
         rightFrontDrive.setDirection(FORWARD);
         rightBackDrive.setDirection(FORWARD);
         leftIntakeMotor.setDirection(FORWARD);
-        rightIntakeMotor.setDirection(REVERSE);
 
         leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftIntakeMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightIntakeMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         leftFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);

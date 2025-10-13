@@ -15,7 +15,7 @@ public class Auto extends LinearOpMode {
     static final int TICKS_PER_REV = 1120;        // goBilda 5202 encoders
     static final double GEAR_RATIO = 1.0;         // motor revs / wheel revs
     static final double Lx = 0.15;                // meters, half length (front-back)
-    static final double Ly = 0.15;
+    static final double Ly = 0.150;
     static final double L = Lx + Ly;              // effective radius// meters, half width (side-to-side)
 
     double x = 0.0;      // meters

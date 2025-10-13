@@ -18,7 +18,7 @@ public class MainTeleOp extends LinearOpMode {
     static final double L = 0.30;                 // Effective track width (Lx + Ly), in meters. MUST BE TUNED.
 
     // --- Odometry state variables ---
-    double x_pos = 0.0;      // meters
+    double x_pos = 0.00;      // meters
     double y_pos = 0.0;      // meters
     double theta_pos = 0.0;  // radians
 

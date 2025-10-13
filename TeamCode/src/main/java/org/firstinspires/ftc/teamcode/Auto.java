@@ -59,7 +59,6 @@ public class Auto extends LinearOpMode {
         leftIntakeMotor = hardwareMap.get(DcMotor.class, "leftIntake");
 
 
-
         // --- 3. Set Motor Directions ---
         // This depends on your robot's build. You may need to reverse some of these.
         // A common mecanum setup is to reverse the motors on one side.
@@ -113,6 +112,7 @@ public class Auto extends LinearOpMode {
 
     /**
      * A helper method to set the run mode for all four drive motors at once.
+     *
      * @param mode The DcMotor.RunMode to set.
      */
     private void setMotorMode(DcMotor.RunMode mode) {
@@ -124,6 +124,7 @@ public class Auto extends LinearOpMode {
 
     /**
      * A helper method to set the zero power behavior for all drive motors.
+     *
      * @param behavior The DcMotor.ZeroPowerBehavior to set.
      */
     private void setZeroPowerBehavior(DcMotor.ZeroPowerBehavior behavior) {
@@ -145,7 +146,8 @@ public class Auto extends LinearOpMode {
 
     /**
      * Drives the robot forward or backward for a specified time and power.
-     * @param power The power to set the motors (-1.0 to 1.0). Positive is forward.
+     *
+     * @param power  The power to set the motors (-1.0 to 1.0). Positive is forward.
      * @param timeMs The time in milliseconds to drive.
      */
     private void driveForward(double power, long timeMs) {
@@ -163,7 +165,8 @@ public class Auto extends LinearOpMode {
 
     /**
      * Turns the robot right (clockwise) for a specified time and power.
-     * @param power The power to set the motors (0 to 1.0).
+     *
+     * @param power  The power to set the motors (0 to 1.0).
      * @param timeMs The time in milliseconds to turn.
      */
     private void turnRight(double power, long timeMs) {
@@ -182,7 +185,8 @@ public class Auto extends LinearOpMode {
 
     /**
      * Strafes the robot left for a specified time and power.
-     * @param power The power to set the motors (0 to 1.0).
+     *
+     * @param power  The power to set the motors (0 to 1.0).
      * @param timeMs The time in milliseconds to strafe.
      */
     private void strafeLeft(double power, long timeMs) {
@@ -198,6 +202,7 @@ public class Auto extends LinearOpMode {
 
         stopDriving();
     }
+
     private void updateOdometry() {
         // Current encoder ticks
         int currFL = leftFrontDrive.getCurrentPosition();
@@ -246,7 +251,8 @@ public class Auto extends LinearOpMode {
         double wheelRevs = (dticks / (double) TICKS_PER_REV) / GEAR_RATIO;
         return wheelRevs * 2.0 * Math.PI * WHEEL_RADIUS;
     }
-    private void launchMotor (long timeMS) {
+
+    private void launchMotor(long timeMS) {
         launchMotor = hardwareMap.get(DcMotor.class, "launchMotor");
 
         launchMotor.setDirection(FORWARD);
@@ -255,7 +261,8 @@ public class Auto extends LinearOpMode {
         sleep(timeMS);
         launchMotor.setPower(0);
     }
-    private void launchServo () {
+
+    private void launchServo() {
         leftServo = hardwareMap.get(Servo.class, "leftServo");
         rightServo = hardwareMap.get(Servo.class, "rightServo");
 
@@ -270,7 +277,8 @@ public class Auto extends LinearOpMode {
         rightServo.setPosition(0);
 
     }
-    private void launchIntake (long timeMS) {
+
+    private void launchIntake(long timeMS) {
         leftIntakeMotor = hardwareMap.get(DcMotor.class, "intakeMotor");
 
         launchMotor.setDirection(FORWARD);
@@ -280,7 +288,12 @@ public class Auto extends LinearOpMode {
         launchMotor.setPower(0);
     }
 
+    private void odometryLoop() {
+        while (opModeIsActive()&& !Thread.currentThread().isInterrupted()) {
+            updateOdometry();
+        }
 
 
-    // You can add more methods here like strafeRight, turnLeft, etc.
+        // You can add more methods here like strafeRight, turnLeft, etc.
+    }
 }

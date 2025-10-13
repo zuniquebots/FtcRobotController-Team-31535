@@ -4,7 +4,6 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
-@TeleOp(name = "MecanumOdometryDemo")
 public class MecanumOdometryDemo extends LinearOpMode {
 
     // --- Robot constants (tune for your bot) ---
@@ -29,10 +28,10 @@ public class MecanumOdometryDemo extends LinearOpMode {
     @Override
     public void runOpMode() {
         // Init motors
-        frontLeft  = hardwareMap.get(DcMotor.class, "leftFrontDrive");
+        frontLeft = hardwareMap.get(DcMotor.class, "leftFrontDrive");
         frontRight = hardwareMap.get(DcMotor.class, "rightFrontDrive");
-        backLeft   = hardwareMap.get(DcMotor.class, "leftBackDrive");
-        backRight  = hardwareMap.get(DcMotor.class, "rightBackDrive");
+        backLeft = hardwareMap.get(DcMotor.class, "leftBackDrive");
+        backRight = hardwareMap.get(DcMotor.class, "rightBackDrive");
 
         // Reset encoders
         frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -105,4 +104,53 @@ public class MecanumOdometryDemo extends LinearOpMode {
         double wheelRevs = (dticks / (double) TICKS_PER_REV) / GEAR_RATIO;
         return wheelRevs * 2.0 * Math.PI * WHEEL_RADIUS;
     }
-}
+
+    private void navigation(double targetX, double targetY, double targetTheta) {
+        final double Kp_pos = 2.0;  // Proportional gain for position. Determines how fast the robot tries to correct position errors.
+        final double Kp_turn = 2.5; // Proportional gain for heading. Determines how fast the robot tries to correct heading errors.
+
+        // --- Tolerances (How close is "close enough"?) ---
+        final double posTolerance = 0.02;   // 2 cm
+        final double thetaTolerance = Math.toRadians(2); // 2 degrees
+        while (opModeIsActive()) {
+            // --- Calculate Errors ---
+            // Calculate the distance and angle errors in the world frame.
+            double errorX = targetX - x;
+            double errorY = targetY - y;
+            double errorTheta = targetTheta - theta;
+
+            // Normalize the heading error to be between -PI and PI
+            errorTheta = Math.atan2(Math.sin(errorTheta), Math.cos(errorTheta));
+
+            double distanceError = Math.hypot(errorX, errorY);
+
+            // --- Check for Completion ---
+            // If the robot is within the tolerance circles for both position and heading, we're done.
+            if (distanceError < posTolerance && Math.abs(errorTheta) < thetaTolerance) {
+                //stopRobot(); our own version of stopRobot
+                telemetry.addData("Status", "Reached target");
+                telemetry.update();
+                break; // Exit the loop
+            }
+
+            // --- Field-Centric to Robot-Centric Transformation ---
+            // We need to translate the world-frame error (where we want to go on the field)
+            // into robot-centric commands (how much to drive forward, strafe, and turn).
+            // This is done by rotating the error vector by the negative of the robot's current heading.
+            double robotX = errorX * Math.cos(-theta) - errorY * Math.sin(-theta);
+            double robotY = errorX * Math.sin(-theta) + errorY * Math.cos(-theta);
+            int var=0;
+
+
+            // --- Telemetry for Debugging ---
+            telemetry.addData("Target", "X:%.2f, Y:%.2f, H:%.1f", targetX, targetY, Math.toDegrees(targetTheta));
+            telemetry.addData("Current", "X:%.2f, Y:%.2f, H:%.1f", x, y, Math.toDegrees(theta));
+            telemetry.addData("Error", "X:%.2f, Y:%.2f, H:%.1f", distanceError, Math.toDegrees(errorTheta));
+            telemetry.addData("Power", "Drv:%.2f, Str:%.2f, Trn:%.2f",var);
+            telemetry.update();
+        }
+        //stopRobot(); our own version of stopRobot
+
+
+        }
+    }

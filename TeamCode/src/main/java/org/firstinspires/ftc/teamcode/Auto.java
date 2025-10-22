@@ -11,7 +11,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 @Autonomous(name = "Auto")
 public class Auto extends LinearOpMode {
-    static final double WHEEL_RADIUS = 0.048;     // meters (e.g., 48 mm wheels)
+    static final double WHEEL_RADIUS = 0.0480;     // meters (e.g., 48 mm wheels)
     static final int TICKS_PER_REV = 1120;        // goBilda 5202 encoders
     static final double GEAR_RATIO = 1.0;         // motor revs / wheel revs
     static final double Lx = 0.15;                // meters, half length (front-back)

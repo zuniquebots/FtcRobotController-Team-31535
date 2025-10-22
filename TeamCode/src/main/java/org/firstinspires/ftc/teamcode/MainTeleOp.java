@@ -114,7 +114,7 @@ public class MainTeleOp extends LinearOpMode {
             double backRightPower = drive + strafe - turn;
 
             // --- Set Motor and Servo Powers ---
-            launchMotor.setPower(0.5*launch);
+            launchMotor.setPower(launch);
             leftFrontDrive.setPower(0.5 * frontLeftPower);
             rightFrontDrive.setPower(0.5 * frontRightPower);
             leftBackDrive.setPower(0.5 * backLeftPower);

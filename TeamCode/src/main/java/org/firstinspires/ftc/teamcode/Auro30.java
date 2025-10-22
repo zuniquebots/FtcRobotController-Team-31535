@@ -75,7 +75,7 @@ public class Auro30 extends LinearOpMode {
 
             telemetry.addLine("Going to Corners");
             telemetry.update();
-            driveToPosition(-1.04, -0.04, Math.toRadians(90), 0.3);
+            driveToPosition(-0.5, 0, Math.toRadians(90), 0.3);
 
 
             // Stop the odometry thread when the autonomous path is finished.

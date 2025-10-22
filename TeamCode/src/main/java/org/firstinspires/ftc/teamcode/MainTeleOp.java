@@ -75,6 +75,7 @@ public class MainTeleOp extends LinearOpMode {
 
 
         // Reset encoders and set run mode for odometry
+        //sai and satvik coded all of this bro trust
         leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -126,7 +127,7 @@ public class MainTeleOp extends LinearOpMode {
             // Control intake motors with an if-else statement
             if (isIntakeRunning) {
                 leftIntake.setPower(-1.0);
-                rightIntake.setPower(-1.0);
+                rightIntake.setPower(-0.65);
             } else {
                 leftIntake.setPower(0.0);
                 rightIntake.setPower(0.0);

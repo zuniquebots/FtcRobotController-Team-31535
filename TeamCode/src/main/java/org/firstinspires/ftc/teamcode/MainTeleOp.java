@@ -126,7 +126,7 @@ public class MainTeleOp extends LinearOpMode {
             // Control intake motors with an if-else statement
             if (isIntakeRunning) {
                 leftIntake.setPower(-1.0);
-                rightIntake.setPower(1.0);
+                rightIntake.setPower(-1.0);
             } else {
                 leftIntake.setPower(0.0);
                 rightIntake.setPower(0.0);

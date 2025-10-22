@@ -114,7 +114,7 @@ public class MainTeleOp extends LinearOpMode {
             double backRightPower = drive + strafe - turn;
 
             // --- Set Motor and Servo Powers ---
-            launchMotor.setPower(launch);
+            launchMotor.setPower(-0.43*launch);
             leftFrontDrive.setPower(0.5 * frontLeftPower);
             rightFrontDrive.setPower(0.5 * frontRightPower);
             leftBackDrive.setPower(0.5 * backLeftPower);
@@ -126,7 +126,7 @@ public class MainTeleOp extends LinearOpMode {
 
             // Control intake motors with an if-else statement
             if (isIntakeRunning) {
-                leftIntake.setPower(-1.0);
+                leftIntake.setPower(-0.5);
                 rightIntake.setPower(-1.0);
             } else {
                 leftIntake.setPower(0.0);

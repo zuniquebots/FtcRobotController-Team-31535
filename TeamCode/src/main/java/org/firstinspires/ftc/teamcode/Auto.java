@@ -92,22 +92,10 @@ public class Auto extends LinearOpMode {
         // The code below this line runs after START is pressed.
         while (opModeIsActive()) {
             updateOdometry();
-
             telemetry.addData("x (m)", x);
             telemetry.addData("y (m)", y);
             telemetry.addData("theta (deg)", Math.toDegrees(theta));
             telemetry.update();
-            // Example: Drive forward for 2 seconds
-            driveForward(DRIVE_SPEED, 2000);
-
-            // Example: Turn right for 1 second
-            turnRight(TURN_SPEED, 1000);
-
-            // Example: Strafe left for 1.5 seconds
-            strafeLeft(DRIVE_SPEED, 1500);
-
-            // Example: Drive backwards for 2 seconds
-            driveForward(-DRIVE_SPEED, 2000); // Negative power to go backward
         }
     }
 

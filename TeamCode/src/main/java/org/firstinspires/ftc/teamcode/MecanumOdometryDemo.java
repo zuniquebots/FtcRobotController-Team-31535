@@ -106,9 +106,8 @@ public class MecanumOdometryDemo extends LinearOpMode {
     }
 
     private void navigation(double targetX, double targetY, double targetTheta) {
-        final double Kp_pos = 2.0;  // Proportional gain for position. Determines how fast the robot tries to correct position errors.
-        final double Kp_turn = 2.5; // Proportional gain for heading. Determines how fast the robot tries to correct heading errors.
-
+        final double Kp_pos = 0.5;  // Proportional gain for position. Determines how fast the robot tries to correct position errors.
+        final double Kp_turn = 0.8; // inside driveToPosition()
         // --- Tolerances (How close is "close enough"?) ---
         final double posTolerance = 0.02;   // 2 cm
         final double thetaTolerance = Math.toRadians(2); // 2 degrees

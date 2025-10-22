@@ -127,9 +127,15 @@ public class MainTeleOp extends LinearOpMode {
 
             // --- Telemetry ---
             telemetry.addData("Status", "Running");
-            telemetry.addData("Drive Power", "FL:, FR:, BL:, BR:", leftFrontDrive.getPower(), rightFrontDrive.getPower(), leftBackDrive.getPower(), rightBackDrive.getPower());
+            telemetry.addData("Front Left", leftFrontDrive.getPower());
+            telemetry.addData("Back Left", leftBackDrive.getPower());
+            telemetry.addData("Front Right", rightFrontDrive.getPower());
+            telemetry.addData("Back Right", rightBackDrive.getPower());
+            telemetry.addData("Launch Motor", launchMotor.getPower());
             telemetry.addData("Launch Motor:",launchMotor.getPower());
-            telemetry.addData("Odometry", "X:, Y:, H:", x_pos, y_pos, Math.toDegrees(theta_pos));
+            telemetry.addData("Odometry X:", x_pos);
+            telemetry.addData("Odometry Y:", y_pos);
+            telemetry.addData("Odometry Theta:", Math.toDegrees(theta_pos));
             telemetry.addData("Intake Running?", isIntakeRunning);
             telemetry.update();
         }

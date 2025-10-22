@@ -254,8 +254,6 @@ public class OdometryDemos extends LinearOpMode {
 
 
 
-                double targetX = (3), y1 = (5);  // current position
-                double targetY = (10), y2 = (12); // target position
             }
 
             stopRobot(); // Kill power at end

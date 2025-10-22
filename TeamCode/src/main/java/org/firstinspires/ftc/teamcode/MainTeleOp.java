@@ -28,6 +28,7 @@ public class MainTeleOp extends LinearOpMode {
     // --- Hardware Declarations ---
     private DcMotor launchMotor;
     private DcMotor leftIntake;
+    private DcMotor rightIntake;
     private Servo rightServo;
     private Servo leftServo;
     private DcMotor leftFrontDrive;
@@ -41,6 +42,7 @@ public class MainTeleOp extends LinearOpMode {
         // Map all hardware from the robot's configuration
         launchMotor = hardwareMap.get(DcMotor.class, "launchMotor");
         leftIntake = hardwareMap.get(DcMotor.class, "leftIntakeMotor");
+        rightIntake = hardwareMap.get(DcMotor.class, "rightIntakeMotor");
         rightServo = hardwareMap.get(Servo.class, "rightServo");
         leftServo = hardwareMap.get(Servo.class, "leftServo");
         leftFrontDrive = hardwareMap.get(DcMotor.class, "leftFrontDrive");
@@ -56,6 +58,7 @@ public class MainTeleOp extends LinearOpMode {
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
 
         launchMotor.setDirection(DcMotor.Direction.FORWARD);
+        rightIntake.setDirection(DcMotor.Direction.REVERSE);
         leftIntake.setDirection(DcMotor.Direction.REVERSE);
         rightServo.setDirection(Servo.Direction.REVERSE);
         leftServo.setDirection(Servo.Direction.FORWARD);
@@ -63,11 +66,13 @@ public class MainTeleOp extends LinearOpMode {
         // --- SET MOTOR BEHAVIOR ---
         // Set zero power behavior to BRAKE for more immediate stops
         leftIntake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightIntake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         launchMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
 
         // Reset encoders and set run mode for odometry
         leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -121,8 +126,10 @@ public class MainTeleOp extends LinearOpMode {
             // Control intake motors with an if-else statement
             if (isIntakeRunning) {
                 leftIntake.setPower(-1.0);
+                rightIntake.setPower(1.0);
             } else {
                 leftIntake.setPower(0.0);
+                rightIntake.setPower(0.0);
             }
 
             // --- Telemetry ---
@@ -132,7 +139,6 @@ public class MainTeleOp extends LinearOpMode {
             telemetry.addData("Front Right", rightFrontDrive.getPower());
             telemetry.addData("Back Right", rightBackDrive.getPower());
             telemetry.addData("Launch Motor", launchMotor.getPower());
-            telemetry.addData("Launch Motor:",launchMotor.getPower());
             telemetry.addData("Odometry X:", x_pos);
             telemetry.addData("Odometry Y:", y_pos);
             telemetry.addData("Odometry Theta:", Math.toDegrees(theta_pos));

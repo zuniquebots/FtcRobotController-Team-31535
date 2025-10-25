@@ -20,6 +20,7 @@ public class Navigation extends LinearOpMode {
             while (opModeIsActive()) {
                 double heading = imu.getAngularOrientation().firstAngle;
 
+
                 telemetry.addData("Left Encoder", leftEncoder.getCurrentPosition());
                 telemetry.addData("Perp Encoder", perpEncoder.getCurrentPosition());
                 telemetry.addData("Heading (rad)", heading);

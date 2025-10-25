@@ -13,22 +13,21 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 public class OdometryDemos extends LinearOpMode {
 
     private DcMotor frontLeft, frontRight, backLeft, backRight;
-    private GoBildaPinpointDriver pinpoint;
 
     @Override
     public void runOpMode() throws InterruptedException {
         // Initialize motors (make sure names match your config)
-        frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
-        frontRight = hardwareMap.get(DcMotor.class, "frontRight");
-        backLeft = hardwareMap.get(DcMotor.class, "backLeft");
-        backRight = hardwareMap.get(DcMotor.class, "backRight");
+        frontLeft = hardwareMap.get(DcMotor.class, "leftFrontDrive");
+        frontRight = hardwareMap.get(DcMotor.class, "rightFrontDrive");
+        backLeft = hardwareMap.get(DcMotor.class, "leftBackDrive");
+        backRight = hardwareMap.get(DcMotor.class, "rightBackDrive");
 
         // Reverse the correct motors (usually right side)
         frontRight.setDirection(DcMotor.Direction.REVERSE);
         backRight.setDirection(DcMotor.Direction.REVERSE);
 
         // Initialize Pinpoint
-        pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "PinpointComputer");
+        GoBildaPinpointDriver pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "PinpointComputer");
 
         telemetry.addLine("Calibrating Pinpoint... keep robot still");
         telemetry.update();

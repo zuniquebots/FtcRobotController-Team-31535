@@ -14,5 +14,6 @@ dependencies {
     implementation 'org.firstinspires.ftc:Vision:11.0.0'
     implementation 'androidx.appcompat:appcompat:1.7.1'
     implementation 'org.ftclib.ftclib:core:2.1.1'
-}
+    implementation 'com.somecompany:problematic-library:1.0.0'
 
+}

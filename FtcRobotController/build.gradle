@@ -16,9 +16,10 @@ android {
 
     buildFeatures {
         buildConfig = true
+        viewBinding true
     }
 
-    compileSdkVersion 30
+    compileSdkVersion 36
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8

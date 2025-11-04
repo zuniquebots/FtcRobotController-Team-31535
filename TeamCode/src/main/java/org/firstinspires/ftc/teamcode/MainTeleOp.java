@@ -125,7 +125,7 @@ public class MainTeleOp extends LinearOpMode {
                 finalLaunchPower = -0.6;
             }
             if (reverseLaunch) {
-                launchMotor.setPower(-0.5);
+                launchMotor.setPower(0.5);
             } else {
                 continue;
             }

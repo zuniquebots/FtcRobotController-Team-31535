@@ -276,9 +276,9 @@ public class SensorGoBildaPinpointExample extends LinearOpMode {
             telemetry.addLine("Driving to (-50, 20)");
             telemetry.update();
             // This creates a target pose at X=0, Y=500mm.
-            Pose2D target1 = new Pose2D(DistanceUnit.MM, 2,2, AngleUnit.DEGREES,0);
+            Pose2D target1 = new Pose2D(DistanceUnit.MM, 5,10, AngleUnit.DEGREES,0);
             // Call the navigation method to drive there at 50% speed.
-            navigation(target1, 0.5);
+            navigation(target1, 0.25);
             telemetry.addLine("Arrived at Target 1.");
             telemetry.update();
             sleep(1000); // Pause for 1 second

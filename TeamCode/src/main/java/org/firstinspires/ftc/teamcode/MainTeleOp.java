@@ -90,6 +90,7 @@ public class MainTeleOp extends LinearOpMode {
         // --- TELEOP LOOP ---
         // --- TELEOP LOOP ---
         // --- TELEOP LOOP ---
+        // --- TELEOP LOOP ---
         while (opModeIsActive()) {
             // --- Get Gamepad Input ---
             double drive = gamepad2.left_stick_y; // Inverted for standard FPS controls
@@ -97,51 +98,58 @@ public class MainTeleOp extends LinearOpMode {
             double turn = gamepad2.right_stick_x;
 
             double servoPosition = gamepad2.left_trigger;
-            boolean intakeOn = gamepad2.right_bumper; // Renamed for clarity
-            boolean reverseLaunch = gamepad2.a; // Renamed for clarity
-
+            boolean intakeOn = gamepad2.right_bumper;
+            boolean reverseLaunch = gamepad2.a; // Button to reverse the launch motor
 
             // --- Launch Motor Control ---
-            // The right trigger on gamepad2 can be used for variable speed control.
-            double triggerLaunchPower = gamepad2.right_trigger;
+            // This section determines the desired power for the launch motor.
+            // We will set the actual motor power only ONCE at the end.
 
-            // Use d-pad on gamepad1 to fine-tune the launchPower variable.
-            // This allows setting a "base" power that the trigger can override.
+            // 1. D-Pad fine-tuning (Gamepad 1)
+            // This adjusts the base 'launchPower' variable.
             if (gamepad1.dpad_up) {
-                launchPower -= 0.02; // Increase power
-                sleep(50); // Add a small delay to prevent it from flying up too fast
+                launchPower += 0.01; // Increase power
+                sleep(50); // Small delay to make adjustments smoother
             } else if (gamepad1.dpad_down) {
-                launchPower += 0.02; // Decrease power
-                sleep(50); // Add a small delay
+                launchPower -= 0.01; // Decrease power
+                sleep(50);
             }
-            if (gamepad1.a) {
-                finalLaunchPower = -0.4; // Decrease power
-            }
-            if (gamepad1.b)
-                finalLaunchPower = 0.0;
-            if (gamepad1.x) {
-                finalLaunchPower = -0.525;
-            if (gamepad1.y){
-                finalLaunchPower = -0.6;
-            }
-            if (reverseLaunch) {
-                launchMotor.setPower(0.5);
-            } else {
-                continue;
-            }
-        }
 
-            // --- Clamp the launchPower to be between 0 and 1 ---
+            // 2. Preset Speeds (Gamepad 1)
+            // These buttons set the 'launchPower' to a specific value.
+            if (gamepad1.a) {
+                launchPower = 0.40;
+            } else if (gamepad1.b) {
+                launchPower = 0.0; // Off
+            } else if (gamepad1.x) {
+                launchPower = 0.525;
+            } else if (gamepad1.y) {
+                launchPower = 0.60;
+            }
+
+            // 3. Clamp the base launchPower to be within a valid forward range [0, 1]
             if (launchPower > 1.0) {
                 launchPower = 1.0;
             } else if (launchPower < 0.0) {
                 launchPower = 0.0;
             }
 
-            // Determine the final power. If the trigger is pressed, it overrides the d-pad setting.
-            // Otherwise, it uses the d-pad setting.
-            double finalLaunchPower = (triggerLaunchPower > 0.05) ? triggerLaunchPower : launchPower;
+            // 4. Check for variable trigger power (Gamepad 2)
+            double triggerLaunchPower = gamepad2.right_trigger;
 
+            // 5. Determine the final power command
+            // Start with the base power set by d-pad/presets
+            double finalLaunchPower = launchPower;
+            // If the trigger is pressed, it overrides the base power
+            if (triggerLaunchPower > 0.05) {
+                finalLaunchPower = triggerLaunchPower;
+            }
+
+            // 6. HIGHEST PRIORITY: Check for reverse command
+            // If 'a' on gamepad2 is pressed, override everything and run motor backwards.
+            if (reverseLaunch) {
+                finalLaunchPower = -0.5; // Set to a negative power for reverse
+            }
 
             // --- Mecanum Drive Calculations ---
             double frontLeftPower = drive + strafe + turn;
@@ -149,14 +157,14 @@ public class MainTeleOp extends LinearOpMode {
             double backLeftPower = drive - strafe + turn;
             double backRightPower = drive + strafe - turn;
 
-            // --- Set Motor and Servo Powers ---
+            // --- Set ALL Motor and Servo Powers ---
             // Drive motors at 50% speed
             leftFrontDrive.setPower(0.5 * frontLeftPower);
             rightFrontDrive.setPower(0.5 * frontRightPower);
             leftBackDrive.setPower(0.5 * backLeftPower);
             rightBackDrive.setPower(0.5 * backRightPower);
 
-            // Set final launch motor power
+            // Set final launch motor power (this is the ONLY place we set it)
             launchMotor.setPower(finalLaunchPower);
 
             // Control servos with the left trigger
@@ -174,13 +182,13 @@ public class MainTeleOp extends LinearOpMode {
 
             // --- Telemetry ---
             telemetry.addData("Status", "Running");
-            telemetry.addData("Drive Speed", "50%");
-            telemetry.addData("D-Pad Launch Power", "%.2f", launchPower);
-            telemetry.addData("Trigger Launch Power", "%.2f", triggerLaunchPower);
             telemetry.addData("Final Launch Power", "%.2f", finalLaunchPower);
+            telemetry.addData("Base (D-Pad/Preset) Power", "%.2f", launchPower);
             telemetry.addData("Intake On?", intakeOn);
+            telemetry.addData("Reverse Active?", reverseLaunch);
             telemetry.update();
         }
+
 
 
 

@@ -26,12 +26,12 @@ import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-import org.firstinspires.ftc.robotcore.external.navigation.UnnormalizedAngleUnit;
 
 
 import java.util.Locale;
@@ -83,7 +83,7 @@ public class SensorGoBildaPinpointExample extends LinearOpMode {
 
 
     public void navigation(Pose2D target, double moveSpeed) {
-        final double DISTANCE_TOLERANCE =10.0; // In millimeters, how close we need to be to stop.
+        final double DISTANCE_TOLERANCE =0.0; // In millimeters, how close we need to be to stop.
 
         // The loop is the core of the navigation. It continues as long as the opMode is active.
         while (opModeIsActive()) {
@@ -157,9 +157,8 @@ public class SensorGoBildaPinpointExample extends LinearOpMode {
     @Override
     public void runOpMode() {
 
-        // Initialize the hardware variables. Note that the strings used here must correspond
-        // to the names assigned during the robot configuration step on the DS or RC devices.
-
+        // --- INITIALIZATION ---
+        // (Your existing initialization code is perfect and does not need to be changed)
         odo = hardwareMap.get(GoBildaPinpointDriver.class, "PinpointComputer");
         launchMotor = hardwareMap.get(DcMotor.class, "launchMotor");
         leftIntake = hardwareMap.get(DcMotor.class, "leftIntakeMotor");
@@ -170,22 +169,19 @@ public class SensorGoBildaPinpointExample extends LinearOpMode {
         rightFrontDrive = hardwareMap.get(DcMotor.class, "rightFrontDrive");
         leftBackDrive = hardwareMap.get(DcMotor.class, "leftBackDrive");
         rightBackDrive = hardwareMap.get(DcMotor.class, "rightBackDrive");
-        // The second mapping of launchMotor was removed.
 
-        // --- SET MOTOR AND SERVO DIRECTIONS ---
-        leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
-        rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
-        leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
-        rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
-
+        // Motor and Servo Directions
+        leftFrontDrive.setDirection(DcMotor.Direction.FORWARD);
+        rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
+        leftBackDrive.setDirection(DcMotor.Direction.FORWARD);
+        rightBackDrive.setDirection(DcMotor.Direction.REVERSE);
         launchMotor.setDirection(DcMotor.Direction.FORWARD);
         rightIntake.setDirection(DcMotor.Direction.REVERSE);
         leftIntake.setDirection(DcMotor.Direction.REVERSE);
         rightServo.setDirection(Servo.Direction.REVERSE);
         leftServo.setDirection(Servo.Direction.FORWARD);
 
-        // --- SET MOTOR BEHAVIOR ---
-        // Set zero power behavior to BRAKE for more immediate stops
+        // Set Zero Power Behavior
         leftIntake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightIntake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         launchMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -194,141 +190,58 @@ public class SensorGoBildaPinpointExample extends LinearOpMode {
         leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-
-        // Reset encoders and set run mode for odometry
-        //sai and satvik coded all of this bro trust
-        leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
+        // Set motor modes
         leftFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        /*
-        Set the odometry pod positions relative to the point that the odometry computer tracks around.
-        The X pod offset refers to how far sideways from the tracking point the
-        X (forward) odometry pod is. Left of the center is a positive number,
-        right of center is a negative number. the Y pod offset refers to how far forwards from
-        the tracking point the Y (strafe) odometry pod is. forward of center is a positive number,
-        backwards is a negative number.
-        Change the offsets below after measuring. Make sure you do it.
-         */
-        odo.setOffsets(-84.0, -168.0, DistanceUnit.MM); //these are tuned for 3110-0002-0001 Product Insight #1
-
-        /*
-        Set the kind of pods used by your robot. If you're using goBILDA odometry pods, select either
-        the goBILDA_SWINGARM_POD, or the goBILDA_4_BAR_POD.
-        If you're using another kind of odometry pod, uncomment setEncoderResolution and input the
-        number of ticks per unit of your odometry pod.
-         */
+        // Pinpoint Configuration
+        odo.setOffsets(-84.0, -168.0, DistanceUnit.MM);
         odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
-        //odo.setEncoderResolution(13.26291192, DistanceUnit.MM);
-
-
-        /*
-        Set the direction that each of the two odometry pods count. The X (forward) pod should
-        increase when you move the robot forward. And the Y (strafe) pod should increase when
-        you move the robot to the left.
-         */
         odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
-
-
-        /*
-        Before running the robot, recalibrate the IMU. This needs to happen when the robot is stationary
-        The IMU will automatically calibrate when first powered on, but recalibrating before running
-        the robot is a good idea to ensure that the calibration is "good".
-        resetPosAndIMU will reset the position to 0,0,0 and also recalibrate the IMU.
-        This is recommended before you run your autonomous, as a bad initial calibration can cause
-        an incorrect starting value for x, y, and heading.
-         */
-        //odo.recalibrateIMU();
         odo.resetPosAndIMU();
 
-        telemetry.addData("Status", "Initialized");
-        telemetry.addData("X offset", odo.getXOffset(DistanceUnit.MM));
-        telemetry.addData("Y offset", odo.getYOffset(DistanceUnit.MM));
-        telemetry.addData("Device Version Number:", odo.getDeviceVersion());
-        telemetry.addData("Heading Scalar", odo.getYawScalar());
+        telemetry.addLine("Initialization Complete. Ready to start.");
         telemetry.update();
 
         // Wait for the game to start (driver presses START)
         waitForStart();
         resetRuntime();
 
+        // --- AUTONOMOUS SEQUENCE ---
+        // This sequence runs only ONCE after you press start.
+        if (opModeIsActive()) {
 
-        // run until the end of the match (driver presses STOP)
-        while (opModeIsActive()) {
-
-            /*
-            Request an update from the Pinpoint odometry computer. This checks almost all outputs
-            from the device in a single I2C read.
-             */
-            odo.update();
-
-            /*
-            Optionally, you can update only the heading of the device. This takes less time to read, but will not
-            pull any other data. Only the heading (which you can pull with getHeading() or in getPosition().
-             */
-            //odo.update(GoBildaPinpointDriver.ReadData.ONLY_UPDATE_HEADING);
-            telemetry.addLine("Driving to (-50, 20)");
+            // --- GO TO TARGET 1 ---
+            telemetry.addLine("Driving forward 500mm...");
             telemetry.update();
-            // This creates a target pose at X=0, Y=500mm.
-            Pose2D target1 = new Pose2D(DistanceUnit.MM, 5,10, AngleUnit.DEGREES,0);
-            // Call the navigation method to drive there at 50% speed.
+
+            // CORRECTED: Create a target pose to drive forward 500mm on the Y-axis.
+            // The constructor is new Pose2D(x, y, heading).
+            Pose2D target1 = new Pose2D(DistanceUnit.MM, 500,0, AngleUnit.DEGREES,0);
+
+            // Call the navigation method to drive there at 25% speed.
             navigation(target1, 0.25);
+
             telemetry.addLine("Arrived at Target 1.");
             telemetry.update();
             sleep(1000); // Pause for 1 second
 
-
-            /*
-            This code prints the loop frequency of the REV Control Hub. This frequency is effected
-            by I²C reads/writes. So it's good to keep an eye on. This code calculates the amount
-            of time each cycle takes and finds the frequency (number of updates per second) from
-            that cycle time.
-             */
-            double newTime = getRuntime();
-            double loopTime = newTime - oldTime;
-            double frequency = 1 / loopTime;
-            oldTime = newTime;
-
-
-            /*
-            gets the current Position (x & y in mm, and heading in degrees) of the robot, and prints it.
-             */
-            Pose2D pos = odo.getPosition();
-            String data = String.format(Locale.US, "{X: %.3f, Y: %.3f, H: %.3f}", pos.getX(DistanceUnit.MM), pos.getY(DistanceUnit.MM), pos.getHeading(AngleUnit.DEGREES));
-            telemetry.addData("Position", data);
-
-            /*
-            gets the current Velocity (x & y in mm/sec and heading in degrees/sec) and prints it.
-             */
-            String velocity = String.format(Locale.US, "{XVel: %.3f, YVel: %.3f, HVel: %.3f}", odo.getVelX(DistanceUnit.MM), odo.getVelY(DistanceUnit.MM), odo.getHeadingVelocity(UnnormalizedAngleUnit.DEGREES));
-            telemetry.addData("Velocity", velocity);
-
-
-            /*
-            Gets the Pinpoint device status. Pinpoint can reflect a few states. But we'll primarily see
-            READY: the device is working as normal
-            CALIBRATING: the device is calibrating and outputs are put on hold
-            NOT_READY: the device is resetting from scratch. This should only happen after a power-cycle
-            FAULT_NO_PODS_DETECTED - the device does not detect any pods plugged in
-            FAULT_X_POD_NOT_DETECTED - The device does not detect an X pod plugged in
-            FAULT_Y_POD_NOT_DETECTED - The device does not detect a Y pod plugged in
-            FAULT_BAD_READ - The firmware detected a bad I²C read, if a bad read is detected, the device status is updated and the previous position is reported
-            */
-            telemetry.addData("Status", odo.getDeviceStatus());
-
-            telemetry.addData("Pinpoint Frequency", odo.getFrequency()); //prints/gets the current refresh rate of the Pinpoint
-
-            telemetry.addData("REV Hub Frequency: ", frequency); //prints the control system refresh rate
+            // --- GO TO TARGET 2 ---
+            telemetry.addLine("Strafing left to (-200, 500)...");
             telemetry.update();
 
+            // You can add more movements here. For example, strafe left 200mm.
+            Pose2D target2 = new Pose2D(DistanceUnit.MM, 50, 10,AngleUnit.DEGREES,0);
+            navigation(target2, 0.25);
+
+            telemetry.addLine("Arrived at Target 2. Autonomous Finished.");
+            telemetry.update();
+            sleep(1000);
         }
-        telemetry.addData("Status", "STOPPED");
-        telemetry.update();
+
+        // The OpMode will automatically stop after the sequence above is complete.
     }
+
 }

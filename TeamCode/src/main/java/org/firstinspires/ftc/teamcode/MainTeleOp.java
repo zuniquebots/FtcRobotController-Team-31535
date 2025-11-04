@@ -11,19 +11,10 @@ import com.qualcomm.robotcore.hardware.Servo;
 @TeleOp(name = "MainTeleOp", group = "Competition")
 public class MainTeleOp extends LinearOpMode {
 
-    // --- Constants for Odometry (if you decide to use it) ---
-    static final double WHEEL_RADIUS = 0.048;     // meters (e.g., 48 mm wheels)
-    static final int TICKS_PER_REV = 1120;        // goBilda 5202 encoders
-    static final double GEAR_RATIO = 1.0;         // motor revs / wheel revs
-    static final double L = 0.30;                 // Effective track width (Lx + Ly), in meters. MUST BE TUNED.
 
     // --- Odometry state variables ---
-    double x_pos = 0.00;      // meters
-    double y_pos = 0.0;      // meters
-    double theta_pos = 0.0;  // radians
 
-    // Previous encoder positions
-    int prevFL = 0, prevFR = 0, prevBR = 0, prevBL = 0;
+
 
     // --- Hardware Declarations ---
     private DcMotor launchMotor;
@@ -35,6 +26,10 @@ public class MainTeleOp extends LinearOpMode {
     private DcMotor rightFrontDrive;
     private DcMotor leftBackDrive;
     private DcMotor rightBackDrive;
+    private double launchPower = 0;
+    private double finalLaunchPower;
+
+
 
     @Override
     public void runOpMode() {
@@ -58,8 +53,8 @@ public class MainTeleOp extends LinearOpMode {
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
 
         launchMotor.setDirection(DcMotor.Direction.FORWARD);
-        rightIntake.setDirection(DcMotor.Direction.REVERSE);
-        leftIntake.setDirection(DcMotor.Direction.REVERSE);
+        rightIntake.setDirection(DcMotor.Direction.FORWARD);
+        leftIntake.setDirection(DcMotor.Direction.FORWARD);
         rightServo.setDirection(Servo.Direction.REVERSE);
         leftServo.setDirection(Servo.Direction.FORWARD);
 
@@ -93,19 +88,60 @@ public class MainTeleOp extends LinearOpMode {
         waitForStart();
 
         // --- TELEOP LOOP ---
+        // --- TELEOP LOOP ---
+        // --- TELEOP LOOP ---
         while (opModeIsActive()) {
-            // --- Update Odometry ---
-            // This continuously tracks the robot's position in the background
-            updateOdometry();
-
             // --- Get Gamepad Input ---
             double drive = gamepad2.left_stick_y; // Inverted for standard FPS controls
             double strafe = -gamepad2.left_stick_x;
             double turn = gamepad2.right_stick_x;
 
-            double launch = gamepad2.right_trigger;
             double servoPosition = gamepad2.left_trigger;
-            boolean isIntakeRunning = gamepad2.right_bumper;
+            boolean intakeOn = gamepad2.right_bumper; // Renamed for clarity
+            boolean reverseLaunch = gamepad2.a; // Renamed for clarity
+
+
+            // --- Launch Motor Control ---
+            // The right trigger on gamepad2 can be used for variable speed control.
+            double triggerLaunchPower = gamepad2.right_trigger;
+
+            // Use d-pad on gamepad1 to fine-tune the launchPower variable.
+            // This allows setting a "base" power that the trigger can override.
+            if (gamepad1.dpad_up) {
+                launchPower -= 0.02; // Increase power
+                sleep(50); // Add a small delay to prevent it from flying up too fast
+            } else if (gamepad1.dpad_down) {
+                launchPower += 0.02; // Decrease power
+                sleep(50); // Add a small delay
+            }
+            if (gamepad1.a) {
+                finalLaunchPower = -0.4; // Decrease power
+            }
+            if (gamepad1.b)
+                finalLaunchPower = 0.0;
+            if (gamepad1.x) {
+                finalLaunchPower = -0.525;
+            if (gamepad1.y){
+                finalLaunchPower = -0.6;
+            }
+            if (reverseLaunch) {
+                launchMotor.setPower(-0.5);
+            } else {
+                continue;
+            }
+        }
+
+            // --- Clamp the launchPower to be between 0 and 1 ---
+            if (launchPower > 1.0) {
+                launchPower = 1.0;
+            } else if (launchPower < 0.0) {
+                launchPower = 0.0;
+            }
+
+            // Determine the final power. If the trigger is pressed, it overrides the d-pad setting.
+            // Otherwise, it uses the d-pad setting.
+            double finalLaunchPower = (triggerLaunchPower > 0.05) ? triggerLaunchPower : launchPower;
+
 
             // --- Mecanum Drive Calculations ---
             double frontLeftPower = drive + strafe + turn;
@@ -114,111 +150,45 @@ public class MainTeleOp extends LinearOpMode {
             double backRightPower = drive + strafe - turn;
 
             // --- Set Motor and Servo Powers ---
-            launchMotor.setPower(0.43*launch);
+            // Drive motors at 50% speed
             leftFrontDrive.setPower(0.5 * frontLeftPower);
             rightFrontDrive.setPower(0.5 * frontRightPower);
             leftBackDrive.setPower(0.5 * backLeftPower);
             rightBackDrive.setPower(0.5 * backRightPower);
 
+            // Set final launch motor power
+            launchMotor.setPower(finalLaunchPower);
+
             // Control servos with the left trigger
             rightServo.setPosition(servoPosition);
             leftServo.setPosition(servoPosition);
 
-            // Control intake motors with an if-else statement
-            if (isIntakeRunning) {
-                leftIntake.setPower(-0.5);
-                rightIntake.setPower(-1.0);
+            // Control intake motors with the right bumper
+            if (intakeOn) {
+                leftIntake.setPower(1);
+                rightIntake.setPower(0.5);
             } else {
-                leftIntake.setPower(0.0);
-                rightIntake.setPower(0.0);
+                leftIntake.setPower(0);
+                rightIntake.setPower(0);
             }
 
             // --- Telemetry ---
             telemetry.addData("Status", "Running");
-            telemetry.addData("Front Left", leftFrontDrive.getPower());
-            telemetry.addData("Back Left", leftBackDrive.getPower());
-            telemetry.addData("Front Right", rightFrontDrive.getPower());
-            telemetry.addData("Back Right", rightBackDrive.getPower());
-            telemetry.addData("Launch Motor", launchMotor.getPower());
-            telemetry.addData("Odometry X:", x_pos);
-            telemetry.addData("Odometry Y:", y_pos);
-            telemetry.addData("Odometry Theta:", Math.toDegrees(theta_pos));
-            telemetry.addData("Intake Running?", isIntakeRunning);
+            telemetry.addData("Drive Speed", "50%");
+            telemetry.addData("D-Pad Launch Power", "%.2f", launchPower);
+            telemetry.addData("Trigger Launch Power", "%.2f", triggerLaunchPower);
+            telemetry.addData("Final Launch Power", "%.2f", finalLaunchPower);
+            telemetry.addData("Intake On?", intakeOn);
             telemetry.update();
         }
 
-        // --- POST-LOOP CLEANUP ---
-        // Ensure all motors are stopped when the OpMode ends.
-        launchMotor.setPower(0);
-        leftIntake.setPower(0);
+
+
         leftFrontDrive.setPower(0);
-        rightFrontDrive.setPower(0);
         leftBackDrive.setPower(0);
+        rightFrontDrive.setPower(0);
         rightBackDrive.setPower(0);
-    } // End of runOpMode()
-
-    // =========================================================================================
-    // HELPER METHODS - MUST BE OUTSIDE OF runOpMode()
-    // =========================================================================================
-
-    /**
-     * Updates the robot's position (x, y, theta) based on encoder changes.
-     * This method uses the mecanum drive kinematics for odometry.
-     */
-    private void updateOdometry() {
-        // Current encoder ticks
-        int currFL = leftFrontDrive.getCurrentPosition();
-        int currFR = rightFrontDrive.getCurrentPosition();
-        int currBR = rightBackDrive.getCurrentPosition();
-        int currBL = leftBackDrive.getCurrentPosition();
-
-        // Δticks since last update
-        int dFL = currFL - prevFL;
-        int dFR = currFR - prevFR;
-        int dBR = currBR - prevBR;
-        int dBL = currBL - prevBL;
-
-        // Save current ticks for the next loop
-        prevFL = currFL;
-        prevFR = currFR;
-        prevBR = currBR;
-        prevBL = currBL;
-
-        // Convert ticks to distance in meters
-        double distFL = ticksToMeters(dFL);
-        double distFR = ticksToMeters(dFR);
-        double distBR = ticksToMeters(dBR);
-        double distBL = ticksToMeters(dBL);
-
-        // Calculate body-frame increments (robot's local movement)
-        // Note: The signs depend on motor directions and kinematics.
-        // This is a standard formulation.
-        double dx_robot = (distFL + distFR + distBR + distBL) / 4.0;
-        double dy_robot = (-distFL + distFR - distBR + distBL) / 4.0; // This seems incorrect for strafing
-        double dTheta = (-distFL + distFR - distBR + distBL) / (4.0 * L);
-
-        // A more standard strafe calculation would be:
-        // double dy_robot = (-distFL + distFR + distBR - distBL) / 4.0;
-
-        // Rotate movement into the world frame (global coordinates)
-        double headingMid = theta_pos + dTheta / 2.0;
-        double dx_world = dx_robot * Math.cos(headingMid) - dy_robot * Math.sin(headingMid);
-        double dy_world = dx_robot * Math.sin(headingMid) + dy_robot * Math.cos(headingMid);
-
-        // Update global pose
-        x_pos += dx_world;
-        y_pos += dy_world;
-        theta_pos += dTheta;
-
-        // Keep theta within [-pi, pi] for consistency
-        theta_pos = Math.atan2(Math.sin(theta_pos), Math.cos(theta_pos));
-    }
-
-    /**
-     * Converts encoder ticks to meters.
-     */
-    private double ticksToMeters(int dticks) {
-        double wheelRevs = (dticks / (double) TICKS_PER_REV) / GEAR_RATIO;
-        return wheelRevs * 2.0 * Math.PI * WHEEL_RADIUS;
     }
 }
+
+

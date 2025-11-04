@@ -23,8 +23,10 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -60,13 +62,96 @@ For support, contact tech@gobilda.com
 -Ethan Doak
  */
 
-@TeleOp(name="goBILDA Pinpoint Example", group="Linear OpMode")
+@Autonomous(name="goBILDA Pinpoint Example", group="Linear OpMode")
 
 public class SensorGoBildaPinpointExample extends LinearOpMode {
 
     GoBildaPinpointDriver odo; // Declare OpMode member for the Odometry Computer
 
     double oldTime = 0;
+
+    private DcMotor launchMotor;
+    private DcMotor leftIntake;
+    private DcMotor rightIntake;
+    private Servo rightServo;
+    private Servo leftServo;
+    private DcMotor leftFrontDrive;
+    private DcMotor rightFrontDrive;
+    private DcMotor leftBackDrive;
+    private DcMotor rightBackDrive;
+
+
+
+    public void navigation(Pose2D target, double moveSpeed) {
+        final double DISTANCE_TOLERANCE =10.0; // In millimeters, how close we need to be to stop.
+
+        // The loop is the core of the navigation. It continues as long as the opMode is active.
+        while (opModeIsActive()) {
+            // STEP 1: Get the robot's current position in every loop iteration.
+            odo.update();
+            Pose2D current = odo.getPosition();
+
+            // STEP 2: Calculate the error between the target and the current position.
+            double errorX = target.getX(DistanceUnit.MM) - current.getX(DistanceUnit.MM);
+            double errorY = target.getY(DistanceUnit.MM) - current.getY(DistanceUnit.MM);
+
+            // STEP 3: Check if the robot has arrived at the target.
+            if (Math.abs(errorX) < DISTANCE_TOLERANCE && Math.abs(errorY) < DISTANCE_TOLERANCE) {
+                // If we are close enough, stop all motors and exit the loop.
+                leftFrontDrive.setPower(0);
+                rightFrontDrive.setPower(0);
+                leftBackDrive.setPower(0);
+                rightBackDrive.setPower(0);
+                break; // Exit the navigation method.
+            }
+
+            // STEP 4: Convert the field-centric error (errorX, errorY) to robot-centric power.
+            // This rotates the error vector to determine how much to move forward vs. strafe.
+            // ... (inside the while loop in the navigation method) ...
+
+            // STEP 4: Convert the field-centric error (errorX, errorY) to robot-centric power.
+            // This rotates the error vector to determine how much to move forward vs. strafe.
+            double robotAngleRad = current.getHeading(AngleUnit.RADIANS);
+            double forwardPower = errorX * Math.cos(robotAngleRad) + errorY * Math.sin(robotAngleRad);
+            double strafePower  = -errorX * Math.sin(robotAngleRad) + errorY * Math.cos(robotAngleRad);
+
+            // ... (rest of the method from Step 5 onwards) ...
+
+            // For this simple A to B movement, we aren't turning.
+            double turnPower = 0;
+
+            // STEP 5: Normalize the powers to ensure they don't exceed the requested speed
+            // while maintaining the correct direction of travel.
+            double maxPower = Math.max(1.0, Math.abs(forwardPower) + Math.abs(strafePower));
+            forwardPower /= maxPower;
+            strafePower /= maxPower;
+
+            // STEP 6: Calculate the power for each of the four mecanum wheels.
+            double frontLeftPower  = (forwardPower + strafePower + turnPower) * moveSpeed;
+            double frontRightPower = (forwardPower - strafePower - turnPower) * moveSpeed;
+            double backLeftPower   = (forwardPower - strafePower + turnPower) * moveSpeed;
+            double backRightPower  = (forwardPower + strafePower - turnPower) * moveSpeed;
+
+            // STEP 7: Set the power on the motors.
+            leftFrontDrive.setPower(frontLeftPower);
+            rightFrontDrive.setPower(frontRightPower);
+            leftBackDrive.setPower(backLeftPower);
+            rightBackDrive.setPower(backRightPower);
+
+            // STEP 8: Provide telemetry for debugging.
+            telemetry.addData("Target", String.format(Locale.US, "X: %.1f, Y: %.1f", target.getX(DistanceUnit.MM), target.getY(DistanceUnit.MM)));
+            telemetry.addData("Current", String.format(Locale.US, "X: %.1f, Y: %.1f, H: %.1f", current.getX(DistanceUnit.MM), current.getY(DistanceUnit.MM), current.getHeading(AngleUnit.DEGREES)));
+            telemetry.addData("Error", String.format(Locale.US, "eX: %.1f, eY: %.1f", errorX, errorY));
+            telemetry.update();
+        }
+        // Ensure motors are off if the opmode is stopped prematurely.
+        leftFrontDrive.setPower(0);
+        rightFrontDrive.setPower(0);
+        leftBackDrive.setPower(0);
+        rightBackDrive.setPower(0);
+    }
+
+
 
 
     @Override
@@ -75,7 +160,52 @@ public class SensorGoBildaPinpointExample extends LinearOpMode {
         // Initialize the hardware variables. Note that the strings used here must correspond
         // to the names assigned during the robot configuration step on the DS or RC devices.
 
-        odo = hardwareMap.get(GoBildaPinpointDriver.class,"PinpointComputer");
+        odo = hardwareMap.get(GoBildaPinpointDriver.class, "PinpointComputer");
+        launchMotor = hardwareMap.get(DcMotor.class, "launchMotor");
+        leftIntake = hardwareMap.get(DcMotor.class, "leftIntakeMotor");
+        rightIntake = hardwareMap.get(DcMotor.class, "rightIntakeMotor");
+        rightServo = hardwareMap.get(Servo.class, "rightServo");
+        leftServo = hardwareMap.get(Servo.class, "leftServo");
+        leftFrontDrive = hardwareMap.get(DcMotor.class, "leftFrontDrive");
+        rightFrontDrive = hardwareMap.get(DcMotor.class, "rightFrontDrive");
+        leftBackDrive = hardwareMap.get(DcMotor.class, "leftBackDrive");
+        rightBackDrive = hardwareMap.get(DcMotor.class, "rightBackDrive");
+        // The second mapping of launchMotor was removed.
+
+        // --- SET MOTOR AND SERVO DIRECTIONS ---
+        leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
+        rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
+        leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
+        rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
+
+        launchMotor.setDirection(DcMotor.Direction.FORWARD);
+        rightIntake.setDirection(DcMotor.Direction.REVERSE);
+        leftIntake.setDirection(DcMotor.Direction.REVERSE);
+        rightServo.setDirection(Servo.Direction.REVERSE);
+        leftServo.setDirection(Servo.Direction.FORWARD);
+
+        // --- SET MOTOR BEHAVIOR ---
+        // Set zero power behavior to BRAKE for more immediate stops
+        leftIntake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightIntake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        launchMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+
+        // Reset encoders and set run mode for odometry
+        //sai and satvik coded all of this bro trust
+        leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        leftFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         /*
         Set the odometry pod positions relative to the point that the odometry computer tracks around.
@@ -143,15 +273,16 @@ public class SensorGoBildaPinpointExample extends LinearOpMode {
             pull any other data. Only the heading (which you can pull with getHeading() or in getPosition().
              */
             //odo.update(GoBildaPinpointDriver.ReadData.ONLY_UPDATE_HEADING);
+            telemetry.addLine("Driving to (-50, 20)");
+            telemetry.update();
+            // This creates a target pose at X=0, Y=500mm.
+            Pose2D target1 = new Pose2D(DistanceUnit.MM, 2,2, AngleUnit.DEGREES,0);
+            // Call the navigation method to drive there at 50% speed.
+            navigation(target1, 0.5);
+            telemetry.addLine("Arrived at Target 1.");
+            telemetry.update();
+            sleep(1000); // Pause for 1 second
 
-
-            if (gamepad1.a){
-                odo.resetPosAndIMU(); //resets the position to 0 and recalibrates the IMU
-            }
-
-            if (gamepad1.b){
-                odo.recalibrateIMU(); //recalibrates the IMU without resetting position
-            }
 
             /*
             This code prints the loop frequency of the REV Control Hub. This frequency is effected
@@ -160,8 +291,8 @@ public class SensorGoBildaPinpointExample extends LinearOpMode {
             that cycle time.
              */
             double newTime = getRuntime();
-            double loopTime = newTime-oldTime;
-            double frequency = 1/loopTime;
+            double loopTime = newTime - oldTime;
+            double frequency = 1 / loopTime;
             oldTime = newTime;
 
 
@@ -175,7 +306,7 @@ public class SensorGoBildaPinpointExample extends LinearOpMode {
             /*
             gets the current Velocity (x & y in mm/sec and heading in degrees/sec) and prints it.
              */
-            String velocity = String.format(Locale.US,"{XVel: %.3f, YVel: %.3f, HVel: %.3f}", odo.getVelX(DistanceUnit.MM), odo.getVelY(DistanceUnit.MM), odo.getHeadingVelocity(UnnormalizedAngleUnit.DEGREES));
+            String velocity = String.format(Locale.US, "{XVel: %.3f, YVel: %.3f, HVel: %.3f}", odo.getVelX(DistanceUnit.MM), odo.getVelY(DistanceUnit.MM), odo.getHeadingVelocity(UnnormalizedAngleUnit.DEGREES));
             telemetry.addData("Velocity", velocity);
 
 
@@ -197,4 +328,7 @@ public class SensorGoBildaPinpointExample extends LinearOpMode {
             telemetry.update();
 
         }
-    }}
+        telemetry.addData("Status", "STOPPED");
+        telemetry.update();
+    }
+}

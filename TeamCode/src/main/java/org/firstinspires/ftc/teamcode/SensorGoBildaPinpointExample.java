@@ -95,7 +95,7 @@ public class SensorGoBildaPinpointExample extends LinearOpMode {
             double errorY = target.getY(DistanceUnit.MM) - current.getY(DistanceUnit.MM);
 
             // STEP 3: Check if the robot has arrived at the target.
-            if (Math.abs(errorX) <= DISTANCE_TOLERANCE && Math.abs(errorY) <= DISTANCE_TOLERANCE) {
+            if (Math.abs(errorX) <= Math.abs(DISTANCE_TOLERANCE) && Math.abs(errorY) <= Math.abs(DISTANCE_TOLERANCE)) {
                     // If we are close enough, stop all motors and exit the loop.
                 leftFrontDrive.setPower(0);
                 rightFrontDrive.setPower(0);

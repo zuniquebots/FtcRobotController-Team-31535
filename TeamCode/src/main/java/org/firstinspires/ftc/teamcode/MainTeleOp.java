@@ -93,7 +93,7 @@ public class MainTeleOp extends LinearOpMode {
 
             double servoPosition = gamepad2.left_trigger;
             boolean intakeOn = gamepad2.right_bumper;
-            boolean reverseLaunch = gamepad2.a; // Button to reverse the launch motor
+            boolean reverseLaunch = gamepad2.left_bumper; // Button to reverse the launch motor
 
             // --- Launch Motor Control ---
             // This section determines the desired power for the launch motor.
@@ -101,23 +101,23 @@ public class MainTeleOp extends LinearOpMode {
 
             // 1. D-Pad fine-tuning (Gamepad 1)
             // This adjusts the base 'launchPower' variable.
-            if (gamepad1.dpad_up) {
+            if (gamepad2.dpad_up) {
                 launchPower += 0.01; // Increase power
                 sleep(50); // Small delay to make adjustments smoother
-            } else if (gamepad1.dpad_down) {
+            } else if (gamepad2.dpad_down) {
                 launchPower -= 0.01; // Decrease power
                 sleep(50);
             }
 
             // 2. Preset Speeds (Gamepad 1)
             // These buttons set the 'launchPower' to a specific value.
-            if (gamepad1.a) {
+            if (gamepad2.a) {
                 launchPower = 0.40;
-            } else if (gamepad1.b) {
+            } else if (gamepad2.b) {
                 launchPower = 0.0; // Off
-            } else if (gamepad1.x) {
+            } else if (gamepad2.x) {
                 launchPower = 0.525;
-            } else if (gamepad1.y) {
+            } else if (gamepad2.y) {
                 launchPower = 0.60;
             }
 
@@ -167,7 +167,7 @@ public class MainTeleOp extends LinearOpMode {
 
             // Control intake motors with the right bumper
             if (intakeOn) {
-                leftIntake.setPower(0.5);
+                leftIntake.setPower(0.25);
                 rightIntake.setPower(1);
             } else {
                 leftIntake.setPower(0);

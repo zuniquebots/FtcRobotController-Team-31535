@@ -27,6 +27,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -78,77 +79,169 @@ public class SensorGoBildaPinpointExample extends LinearOpMode {
     private DcMotor rightFrontDrive;
     private DcMotor leftBackDrive;
     private DcMotor rightBackDrive;
+    private final double DISTANCE_TOLERANCE = 5.0; // In millimeters, how close we need to be to stop.
 
 
-
-    public void navigation(Pose2D target, double moveSpeed) {
-        final double DISTANCE_TOLERANCE = 5.0; // In millimeters, how close we need to be to stop.
-
-        // The loop is the core of the navigation. It continues as long as the opMode is active.
-        while (opModeIsActive()) {
-            // STEP 1: Get the robot's current position in every loop iteration.
-            odo.update();
-            Pose2D current = odo.getPosition();
-
-            // STEP 2: CORRECTED - Calculate the error between the target and the current position.
-            double errorX = target.getX(DistanceUnit.MM) - current.getX(DistanceUnit.MM);
-            double errorY = target.getY(DistanceUnit.MM) - current.getY(DistanceUnit.MM);
-
-            // STEP 3: Check if the robot has arrived at the target.
-            if (Math.abs(errorX) <= Math.abs(DISTANCE_TOLERANCE) && Math.abs(errorY) <= Math.abs(DISTANCE_TOLERANCE)) {
-                    // If we are close enough, stop all motors and exit the loop.
-                leftFrontDrive.setPower(0);
-                rightFrontDrive.setPower(0);
-                leftBackDrive.setPower(0);
-                rightBackDrive.setPower(0);
-                break; // Exit the navigation method.
-            }
-
-            // STEP 4: Convert the field-centric error (errorX, errorY) to robot-centric power.
-            double robotAngleRad = current.getHeading(AngleUnit.RADIANS);
-            double forwardPower = errorX * Math.cos(robotAngleRad) + errorY * Math.sin(robotAngleRad);
-            double strafePower  = -errorX * Math.sin(robotAngleRad) + errorY * Math.cos(robotAngleRad);
-
-            // For this simple A to B movement, we aren't turning.
-            double turnPower = 0;
-
-            // STEP 5: Normalize the powers
-            double maxPower = Math.max(1.0, Math.abs(forwardPower) + Math.abs(strafePower));
-            forwardPower /= maxPower;
-            strafePower /= maxPower;
-
-            // STEP 6: Calculate the power for each of the four mecanum wheels.
-            double frontLeftPower  = (forwardPower + strafePower + turnPower) * moveSpeed;
-            double frontRightPower = (forwardPower - strafePower - turnPower) * moveSpeed;
-            double backLeftPower   = (forwardPower - strafePower + turnPower) * moveSpeed;
-            double backRightPower  = (forwardPower + strafePower - turnPower) * moveSpeed;
-
-            // STEP 7: Set the power on the motors.
-            leftFrontDrive.setPower(frontLeftPower);
-            rightFrontDrive.setPower(frontRightPower);
-            leftBackDrive.setPower(backLeftPower);
-            rightBackDrive.setPower(backRightPower);
-
-            // STEP 8: Provide telemetry for debugging.
-            telemetry.addData("Target", String.format(Locale.US, "X: %.1f, Y: %.1f", target.getX(DistanceUnit.MM), target.getY(DistanceUnit.MM)));
-            telemetry.addData("Current", String.format(Locale.US, "X: %.1f, Y: %.1f, H: %.1f", current.getX(DistanceUnit.MM), current.getY(DistanceUnit.MM), current.getHeading(AngleUnit.DEGREES)));
-            telemetry.addData("Error", String.format(Locale.US, "eX: %.1f, eY: %.1f", errorX, errorY));
-            telemetry.update();
-        }
-        // Ensure motors are off if the opmode is stopped prematurely.
+    private void stopRobot(){
         leftFrontDrive.setPower(0);
         rightFrontDrive.setPower(0);
         leftBackDrive.setPower(0);
         rightBackDrive.setPower(0);
     }
 
+    public void navigation(Pose2D target, double moveSpeed) {
+
+        Pose2D current = null;
+
+        double targetX = 200;
+        double targetY = 0;
+        double targetHeading = 0;
+
+        double currentX = 0;
+        double currentY = 0;
+        double currentHeading = 0;
+
+
+        double deltaX = 0;
+        double deltaY = 0 ;
+        double deltaHeading = 0;
+        double absoluteAngleToTarget = 0;
+        double distanceToTarget = 0;
+
+        double drivePower = 0;
+        double turnPower = 0;
+
+        double maxPower = 0;
+
+
+        double forwardPower = 0;
+        double strafePower = 0;
+        double frontLeftPower = 0;
+        double frontRightPower = 0;
+        double backLeftPower = 0;
+        double backRightPower = 0;
+
+
+        // The loop is the core of the navigation. It continues as long as the opMode is active.
+        while (opModeIsActive() && !(isAtTarget(targetX,targetY))) {
+            // STEP 1: Get the robot's current position in every loop iteration.
+            odo.update();
+            current = odo.getPosition();
+
+            targetX = target.getX(DistanceUnit.MM);
+            targetY = target.getY(DistanceUnit.MM);
+            targetHeading = target.getHeading(AngleUnit.RADIANS);
+
+
+            currentX = current.getX(DistanceUnit.MM);
+            currentY = current.getY(DistanceUnit.MM);
+            currentHeading = current.getHeading(AngleUnit.RADIANS);
+
+            //Calculate error(Delta)
+            deltaX = targetX - currentX;
+            deltaY = targetY - currentY;
+            distanceToTarget = Math.sqrt(deltaX * deltaX +  deltaY * deltaY);
+            absoluteAngleToTarget = Math.atan2(deltaY, deltaX); // Calculate desired heading to target
+            deltaHeading = AngleUnit.RADIANS.normalize(absoluteAngleToTarget - currentHeading);
+
+            // STEP 3: Check if the robot has arrived at the target.
+            if (Math.abs(deltaX) <= Math.abs(DISTANCE_TOLERANCE) && Math.abs(deltaY) <= Math.abs(DISTANCE_TOLERANCE)) {
+                stopRobot();  // If we are close enough, stop all motors and exit the loop
+                break; // Exit the navigation method.
+            }
+
+            // Look for this Formula:
+            drivePower = Range.clip(distanceToTarget / 20.0, 0.1, 0.5); // Max 0.5 power
+            turnPower = Range.clip(deltaHeading * 3.0, -0.3, 0.3); // Max 0.3 turn power
 
 
 
+            /*
+            forwardPower = deltaX * Math.cos(currentHeading) + deltaY * Math.sin(currentHeading);
+            strafePower  = deltaX * Math.sin(currentHeading) + deltaY * Math.cos(currentHeading);
 
-    @Override
-    public void runOpMode() {
+            // For this simple A to B movement, we aren't turning.
+            turnPower = 0;
 
+            // STEP 5: Normalize the powers
+            maxPower = Math.max(1.0, Math.abs(forwardPower) + Math.abs(strafePower));
+            forwardPower /= maxPower;
+            strafePower /= maxPower;
+
+            // STEP 6: Calculate the power for each of the four mecanum wheels.
+            frontLeftPower  = (forwardPower + strafePower + turnPower) * moveSpeed;
+            frontRightPower = (forwardPower - strafePower - turnPower) * moveSpeed;
+            backLeftPower   = (forwardPower - strafePower + turnPower) * moveSpeed;
+            backRightPower  = (forwardPower + strafePower - turnPower) * moveSpeed;
+
+             */
+
+            // STEP 7: Set the power on the motors.
+
+            // Convert field-centric error to robot-centric movement commands
+            // This is the key difference for mecanum/holonomic drive
+            double angleRelativeToRobot = AngleUnit.RADIANS.normalize(absoluteAngleToTarget - currentHeading);
+            double forward = Math.cos(angleRelativeToRobot) * drivePower;
+            double strafe = Math.sin(angleRelativeToRobot) * drivePower;
+            double turn = turnPower; // Use turn power to correct heading while moving
+
+            // Apply mecanum wheel kinematics formula
+            frontLeftPower = (forward + strafe + turn)*moveSpeed;
+            frontRightPower = (forward - strafe - turn)*moveSpeed;
+            backLeftPower = (forward - strafe + turn)*moveSpeed;
+            backRightPower = (forward + strafe - turn)*moveSpeed;
+
+            // Normalize wheel speeds to keep all powers within the [-1, 1] range
+            maxPower = Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower));
+            maxPower = Math.max(maxPower, Math.abs(backLeftPower));
+            maxPower = Math.max(maxPower, Math.abs(backRightPower));
+
+            if (maxPower > 1.0) {
+                frontLeftPower /= maxPower;
+                frontRightPower /= maxPower;
+                backLeftPower /= maxPower;
+                backRightPower /= maxPower;
+            }
+
+            // Set motor powers
+            leftFrontDrive.setPower(frontLeftPower);
+            rightFrontDrive.setPower(frontRightPower);
+            leftBackDrive.setPower(backLeftPower);
+            rightBackDrive.setPower(backRightPower);
+
+
+            // Telemetry for debugging
+            telemetry.addData("Current X", currentX);
+            telemetry.addData("Current Y", currentY);
+            telemetry.addData("Distance Left", distanceToTarget);
+            telemetry.addData("Turn Error (Rad)", deltaHeading);
+            telemetry.update();
+            sleep(1000);
+
+            // STEP 8: Provide telemetry for debugging.
+            telemetry.addData("Target", String.format(Locale.US, "X: %.1f, Y: %.1f", target.getX(DistanceUnit.MM), target.getY(DistanceUnit.MM)));
+            telemetry.addData("Current", String.format(Locale.US, "X: %.1f, Y: %.1f, H: %.1f", current.getX(DistanceUnit.MM), current.getY(DistanceUnit.MM), current.getHeading(AngleUnit.DEGREES)));
+            telemetry.addData("Delta", String.format(Locale.US, "deltaX: %.1f, deltaY: %.1f", deltaX, deltaY));
+            telemetry.addData("Powers of Motors", String.format(Locale.US, "FL: %.1f, FR: %.1f, BL: %.1f, BR: %.1f", frontLeftPower, frontRightPower, backLeftPower, backRightPower));
+            telemetry.update();
+            sleep(1000);
+
+        }
+
+        // Ensure motors are off if the opmode is stopped prematurely.
+        stopRobot();
+    }
+
+    private boolean isAtTarget(double targetX, double targetY) {
+        Pose2D currentPose = odo.getPosition();
+        double dx = targetX - currentPose.getX(DistanceUnit.MM);
+        double dy = targetY - currentPose.getY(DistanceUnit.MM);
+        double distance = Math.sqrt(dx * dx + dy * dy);
+        return distance < DISTANCE_TOLERANCE;
+    }
+
+
+    private void initialize(){
         // --- INITIALIZATION ---
         // (Your existing initialization code is perfect and does not need to be changed)
         odo = hardwareMap.get(GoBildaPinpointDriver.class, "PinpointComputer");
@@ -161,7 +254,6 @@ public class SensorGoBildaPinpointExample extends LinearOpMode {
         rightFrontDrive = hardwareMap.get(DcMotor.class, "rightFrontDrive");
         leftBackDrive = hardwareMap.get(DcMotor.class, "leftBackDrive");
         rightBackDrive = hardwareMap.get(DcMotor.class, "rightBackDrive");
-
         // Motor and Servo Directions
         leftFrontDrive.setDirection(DcMotor.Direction.FORWARD);
         rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
@@ -193,6 +285,13 @@ public class SensorGoBildaPinpointExample extends LinearOpMode {
         odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
         odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
         odo.resetPosAndIMU();
+    }
+
+
+    @Override
+    public void runOpMode() {
+
+        initialize();
 
         telemetry.addLine("Initialization Complete. Ready to start.");
         telemetry.update();
@@ -205,6 +304,8 @@ public class SensorGoBildaPinpointExample extends LinearOpMode {
         // This sequence runs only ONCE after you press start.
         // --- AUTONOMOUS SEQUENCE ---
         // This sequence runs only ONCE after you press start.
+        Pose2D target1 = null;
+
         if (opModeIsActive()) {
 
             // --- GO TO TARGET 1 ---
@@ -212,13 +313,22 @@ public class SensorGoBildaPinpointExample extends LinearOpMode {
             telemetry.update();
 
             // CORRECTED: Create a target pose to drive to X=0, Y=200, with a heading of 0 degrees.
-        // CORRECTED: Create a target pose to drive to X=0, Y=200, with a heading of 0 degrees.
-            Pose2D target1 = new Pose2D(DistanceUnit.MM,0, -20, AngleUnit.RADIANS,Math.toRadians(0));
+            target1 = new Pose2D(DistanceUnit.MM,0, -200, AngleUnit.RADIANS,Math.toRadians(0));
 
-            // Call the navigation method to drive there at 25% speed.
-            navigation(target1, 0.25);
+            if (target1 != null) {
+                // CORRECTED: Call the navigation method to drive there at 25% speed.
+                telemetry.addLine("Navigate to (X:0, Y:200)...");
+                telemetry.update();
+                navigation(target1, 0.25);
+            }else{
+                telemetry.addLine("Target 1 is null.");
+                telemetry.update();
+                stopRobot();
+
+            }
 
             telemetry.addLine("Arrived at Target 1.");
+            telemetry.addData("Endpoints",target1);
             telemetry.update();
             sleep(1000); // Pause for 1 second
 

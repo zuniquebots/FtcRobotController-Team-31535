@@ -213,7 +213,7 @@ public class SensorGoBildaPinpointExample extends LinearOpMode {
 
             // CORRECTED: Create a target pose to drive to X=0, Y=200, with a heading of 0 degrees.
 // CORRECTED: Create a target pose to drive to X=0, Y=200, with a heading of 0 degrees.
-            Pose2D target1 = new Pose2D(DistanceUnit.MM,0, 200, AngleUnit.RADIANS,Math.toRadians(0));
+            Pose2D target1 = new Pose2D(DistanceUnit.MM,0, 20, AngleUnit.RADIANS,Math.toRadians(0));
 
             // Call the navigation method to drive there at 25% speed.
             navigation(target1, 0.25);

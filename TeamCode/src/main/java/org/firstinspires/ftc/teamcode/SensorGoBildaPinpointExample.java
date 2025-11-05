@@ -204,7 +204,7 @@ public class SensorGoBildaPinpointExample extends LinearOpMode {
         // --- AUTONOMOUS SEQUENCE ---
         // This sequence runs only ONCE after you press start.
         // --- AUTONOMOUS SEQUENCE ---
-// This sequence runs only ONCE after you press start.
+        // This sequence runs only ONCE after you press start.
         if (opModeIsActive()) {
 
             // --- GO TO TARGET 1 ---
@@ -212,7 +212,7 @@ public class SensorGoBildaPinpointExample extends LinearOpMode {
             telemetry.update();
 
             // CORRECTED: Create a target pose to drive to X=0, Y=200, with a heading of 0 degrees.
-// CORRECTED: Create a target pose to drive to X=0, Y=200, with a heading of 0 degrees.
+        // CORRECTED: Create a target pose to drive to X=0, Y=200, with a heading of 0 degrees.
             Pose2D target1 = new Pose2D(DistanceUnit.MM,0, -20, AngleUnit.RADIANS,Math.toRadians(0));
 
             // Call the navigation method to drive there at 25% speed.

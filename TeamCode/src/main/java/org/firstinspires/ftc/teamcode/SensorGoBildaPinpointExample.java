@@ -26,7 +26,6 @@ import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -53,7 +52,7 @@ the pods are from the "tracking point", usually the center of rotation of the ro
 
 Dead Wheel pods should both increase in count when moved forwards and to the left.
 The gyro will report an increase in heading when rotated counterclockwise.
-
+tt
 The Pose Exponential algorithm used is described on pg 181 of this book:
 https://github.com/calcmogul/controls-engineering-in-frc
 
@@ -83,7 +82,7 @@ public class SensorGoBildaPinpointExample extends LinearOpMode {
 
 
     public void navigation(Pose2D target, double moveSpeed) {
-        final double DISTANCE_TOLERANCE =0.0; // In millimeters, how close we need to be to stop.
+        final double DISTANCE_TOLERANCE = 5.0; // In millimeters, how close we need to be to stop.
 
         // The loop is the core of the navigation. It continues as long as the opMode is active.
         while (opModeIsActive()) {
@@ -91,13 +90,13 @@ public class SensorGoBildaPinpointExample extends LinearOpMode {
             odo.update();
             Pose2D current = odo.getPosition();
 
-            // STEP 2: Calculate the error between the target and the current position.
+            // STEP 2: CORRECTED - Calculate the error between the target and the current position.
             double errorX = target.getX(DistanceUnit.MM) - current.getX(DistanceUnit.MM);
             double errorY = target.getY(DistanceUnit.MM) - current.getY(DistanceUnit.MM);
 
             // STEP 3: Check if the robot has arrived at the target.
-            if (Math.abs(errorX) < DISTANCE_TOLERANCE && Math.abs(errorY) < DISTANCE_TOLERANCE) {
-                // If we are close enough, stop all motors and exit the loop.
+            if (Math.abs(errorX) <= DISTANCE_TOLERANCE && Math.abs(errorY) <= DISTANCE_TOLERANCE) {
+                    // If we are close enough, stop all motors and exit the loop.
                 leftFrontDrive.setPower(0);
                 rightFrontDrive.setPower(0);
                 leftBackDrive.setPower(0);
@@ -106,22 +105,14 @@ public class SensorGoBildaPinpointExample extends LinearOpMode {
             }
 
             // STEP 4: Convert the field-centric error (errorX, errorY) to robot-centric power.
-            // This rotates the error vector to determine how much to move forward vs. strafe.
-            // ... (inside the while loop in the navigation method) ...
-
-            // STEP 4: Convert the field-centric error (errorX, errorY) to robot-centric power.
-            // This rotates the error vector to determine how much to move forward vs. strafe.
             double robotAngleRad = current.getHeading(AngleUnit.RADIANS);
             double forwardPower = errorX * Math.cos(robotAngleRad) + errorY * Math.sin(robotAngleRad);
             double strafePower  = -errorX * Math.sin(robotAngleRad) + errorY * Math.cos(robotAngleRad);
 
-            // ... (rest of the method from Step 5 onwards) ...
-
             // For this simple A to B movement, we aren't turning.
             double turnPower = 0;
 
-            // STEP 5: Normalize the powers to ensure they don't exceed the requested speed
-            // while maintaining the correct direction of travel.
+            // STEP 5: Normalize the powers
             double maxPower = Math.max(1.0, Math.abs(forwardPower) + Math.abs(strafePower));
             forwardPower /= maxPower;
             strafePower /= maxPower;
@@ -150,6 +141,7 @@ public class SensorGoBildaPinpointExample extends LinearOpMode {
         leftBackDrive.setPower(0);
         rightBackDrive.setPower(0);
     }
+
 
 
 
@@ -211,15 +203,17 @@ public class SensorGoBildaPinpointExample extends LinearOpMode {
 
         // --- AUTONOMOUS SEQUENCE ---
         // This sequence runs only ONCE after you press start.
+        // --- AUTONOMOUS SEQUENCE ---
+// This sequence runs only ONCE after you press start.
         if (opModeIsActive()) {
 
             // --- GO TO TARGET 1 ---
-            telemetry.addLine("Driving forward 500mm...");
+            telemetry.addLine("Driving to (X:0, Y:200)...");
             telemetry.update();
 
-            // CORRECTED: Create a target pose to drive forward 500mm on the Y-axis.
-            // The constructor is new Pose2D(x, y, heading).
-            Pose2D target1 = new Pose2D(DistanceUnit.MM, 500,0, AngleUnit.DEGREES,0);
+            // CORRECTED: Create a target pose to drive to X=0, Y=200, with a heading of 0 degrees.
+// CORRECTED: Create a target pose to drive to X=0, Y=200, with a heading of 0 degrees.
+            Pose2D target1 = new Pose2D(DistanceUnit.MM,0, 200, AngleUnit.RADIANS,Math.toRadians(0));
 
             // Call the navigation method to drive there at 25% speed.
             navigation(target1, 0.25);
@@ -228,18 +222,8 @@ public class SensorGoBildaPinpointExample extends LinearOpMode {
             telemetry.update();
             sleep(1000); // Pause for 1 second
 
-            // --- GO TO TARGET 2 ---
-            telemetry.addLine("Strafing left to (-200, 500)...");
-            telemetry.update();
-
-            // You can add more movements here. For example, strafe left 200mm.
-            Pose2D target2 = new Pose2D(DistanceUnit.MM, 50, 10,AngleUnit.DEGREES,0);
-            navigation(target2, 0.25);
-
-            telemetry.addLine("Arrived at Target 2. Autonomous Finished.");
-            telemetry.update();
-            sleep(1000);
         }
+
 
         // The OpMode will automatically stop after the sequence above is complete.
     }

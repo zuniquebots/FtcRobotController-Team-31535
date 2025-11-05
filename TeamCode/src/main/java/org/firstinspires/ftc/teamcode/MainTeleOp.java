@@ -6,15 +6,9 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
-
 // The @TeleOp name was "LaunchMotor", which is confusing. Renamed to "MainTeleOp" for clarity.
 @TeleOp(name = "MainTeleOp", group = "Competition")
 public class MainTeleOp extends LinearOpMode {
-
-
-    // --- Odometry state variables ---
-
-
 
     // --- Hardware Declarations ---
     private DcMotor launchMotor;
@@ -173,8 +167,8 @@ public class MainTeleOp extends LinearOpMode {
 
             // Control intake motors with the right bumper
             if (intakeOn) {
-                leftIntake.setPower(1);
-                rightIntake.setPower(0.5);
+                leftIntake.setPower(0.5);
+                rightIntake.setPower(1);
             } else {
                 leftIntake.setPower(0);
                 rightIntake.setPower(0);

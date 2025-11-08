@@ -66,8 +66,8 @@ public class MainAUto extends LinearOpMode {
 
     GoBildaPinpointDriver pinpointDriver; // Declare OpMode member for the Odometry Computer
     private DcMotor leftFrontDrive, rightFrontDrive, leftBackDrive, rightBackDrive; // Assuming a 4-wheel drive
-    private DcMotor launchMotor,leftIntake,rightIntake;
-    private Servo rightServo,leftServo;
+    private DcMotor launchMotor, leftIntake, rightIntake;
+    private Servo rightServo, leftServo;
     private ColorSensor colorSensor;
     private final double DISTANCE_TOLERANCE = 5.0; // In millimeters, how close we need to be to stop.
 
@@ -79,7 +79,7 @@ public class MainAUto extends LinearOpMode {
         //STEP 1: Initialize Hardware Settings
         initialize();
 
-        Pose2D current = new Pose2D(distanceUnit,0,    200,   angleUnit, Math.toRadians(0));  // Set the robot's initial position  - that converts an angle of 0 degrees to its equivalent value in radians.
+        Pose2D current = new Pose2D(distanceUnit, 0, 0, angleUnit, Math.toRadians(0));  // Set the robot's initial position  - that converts an angle of 0 degrees to its equivalent value in radians.
         pinpointDriver.setPosition(current);
         pinpointDriver.recalibrateIMU();
 
@@ -94,14 +94,14 @@ public class MainAUto extends LinearOpMode {
             rightIntake.setPower(-1);
 
             // STEP 2: Set the Target
-            Pose2D target  = new Pose2D(distanceUnit,0, -400, angleUnit, Math.toRadians(0));  // Set the robot's target position
+            Pose2D target = new Pose2D(distanceUnit, 0, -400, angleUnit, Math.toRadians(0));  // Set the robot's target position
             telemetry.addData("Status", "Moving to Target");
             telemetry.addData("Current X, Y", "%.2f, %.2f", current.getX(distanceUnit), current.getY(distanceUnit));
             telemetry.addData("Target X, Y", "%.2f, %.2f", target.getX(distanceUnit), target.getY(distanceUnit));
             telemetry.update();
 
             //STEP 3: Move to Target
-            moveToTarget(target.getX(distanceUnit), target.getY(distanceUnit), 30.0,distanceUnit,angleUnit);
+            moveToTarget(target.getX(distanceUnit), target.getY(distanceUnit), 0, distanceUnit, angleUnit);
             telemetry.addData("Status", "Reached Target");
             telemetry.update();
             //Step 4: Check whether there are balls in the robot
@@ -123,12 +123,13 @@ public class MainAUto extends LinearOpMode {
                 android.graphics.Color.RGBToHSV(redValue, greenValue, blueValue, hsvValues);
 
 
-                if (isGreenOrPurple(redValue,greenValue,blueValue)) {
+                if (isGreenOrPurple(hsvValues)) {
                     telemetry.addLine("Pixel Detected: Green or Purple");
                     // Add actions here, e.g., run launcher
                     launchMotor.setPower(0.4);
-                    sleep(1000); // run for 1 second
-                    launchMotor.setPower(0);
+                    sleep(1000);
+                    leftIntake.setPower(0);
+
                 } else {
                     telemetry.addLine("No Green or Purple Pixel Detected");
                 }
@@ -138,10 +139,8 @@ public class MainAUto extends LinearOpMode {
                 telemetry.addData("Value", "%.1f", hsvValues[2]);
                 telemetry.addData("Status", "Autonomous Finished");
                 telemetry.update();
-                sleep(2000); // Pause to see final
+                sleep(1000);
             }
-
-
 
 
         }
@@ -149,7 +148,8 @@ public class MainAUto extends LinearOpMode {
 
         // The OpMode will automatically stop after the sequence above is complete.
     }
-    private void initialize(){
+
+    private void initialize() {
         // --- INITIALIZATION ---
         // (Your existing initialization code is perfect and does not need to be changed)
         pinpointDriver = hardwareMap.get(GoBildaPinpointDriver.class, "PinpointComputer");
@@ -210,14 +210,14 @@ public class MainAUto extends LinearOpMode {
     public void moveToTarget(double targetX, double targetY, double targetHeading, DistanceUnit distanceUnit, AngleUnit angleUnit) {
         double currentX = 0.0;
         double currentY = 0.0;
-        double currentHeading =0.0;
+        double currentHeading = 0.0;
 
-        while (opModeIsActive() && !isAtTarget(targetX, targetY, targetHeading,distanceUnit,angleUnit)) {
+        while (opModeIsActive() && !isAtTarget(targetX, targetY, targetHeading, distanceUnit, angleUnit)) {
             pinpointDriver.update();
             // Get current position
             Pose2D currentPose = pinpointDriver.getPosition();
             currentX = currentPose.getX(distanceUnit);
-            currentY= currentPose.getY(distanceUnit);
+            currentY = currentPose.getY(distanceUnit);
             currentHeading = currentPose.getHeading(angleUnit);  // Angle to target relative to robot's current heading
 
             // Calculate error (distance to target)  & Calculate movement direction (angle towards target)
@@ -256,17 +256,22 @@ public class MainAUto extends LinearOpMode {
 
         telemetry.addData("Status", "Arrived at Target.");
         telemetry.addData("Target X, Y", "%.2f, %.2f", targetX, targetY);
-        telemetry.addData("Current X, Y", "%.2f, %.2f",currentX,  currentY);
+        telemetry.addData("Current X, Y", "%.2f, %.2f", currentX, currentY);
         telemetry.update();
 
         sleep(1000); // Pause for 1 second
 
         // Stop motors once target is reached
         stopMotors();
+        telemetry.addData("Status", "Stopping Motors.");
+        telemetry.update();
+        sleep(200); // Pause for 0.2 second
+
     }
+
     private boolean isAtTarget(double targetX, double targetY, double targetHeading, DistanceUnit distanceUnit, AngleUnit angleUnit) {
         // Define tolerance levels for position and heading
-        double positionTolerance = 20.0; // e.g., 20mm
+        double positionTolerance = 5.0; // e.g., 20mm
         double headingTolerance = 2.0;   // e.g., 2 degrees
 
         double currentX = pinpointDriver.getPosX(distanceUnit);
@@ -314,47 +319,51 @@ public class MainAUto extends LinearOpMode {
         backLeftPower = Range.clip(backLeftPower, -1.0, 1.0);
         backRightPower = Range.clip(backRightPower, -1.0, 1.0);
 
-        leftFrontDrive.setPower(0.8*-frontLeftPower);
-        rightFrontDrive.setPower(0.8*-frontRightPower);
+        leftFrontDrive.setPower(0.8 * -frontLeftPower);
+        rightFrontDrive.setPower(0.8 * -frontRightPower);
 
-        leftBackDrive.setPower(0.8*-backLeftPower);
-        rightBackDrive.setPower(0.8*-backRightPower);
+        leftBackDrive.setPower(0.8 * -backLeftPower);
+        rightBackDrive.setPower(0.8 * -backRightPower);
     }
 
-    private void stopMotors(){
+    private void stopMotors() {
         leftFrontDrive.setPower(0);
         rightFrontDrive.setPower(0);
         leftBackDrive.setPower(0);
         rightBackDrive.setPower(0);
     }
-    public static boolean isGreenOrPurple(int R, int G, int B) {
-            boolean isGreen = G > R * 1.5 && G > B * 1.5 && G > 50; // Green detection
-            boolean isPurple = R > G * 1.5 && B > G * 1.5 && R + B > 150; // Purple detection
-            // True if green or purple are detected;
-            return isGreen || isPurple;
+
+    /**
+     * Checks if the given HSV values correspond to either green or purple.
+     * Using HSV is more reliable across different lighting conditions than RGB.
+     *
+     * @param hsv An array of floats containing Hue, Saturation, and Value.
+     * @return True if the color is confidently detected as green or purple, false otherwise.
+     */
+    public static boolean isGreenOrPurple(float[] hsv) {
+        // hsv[0] is Hue (0-360), hsv[1] is Saturation (0-1), hsv[2] is Value (0-1)
+        float hue = hsv[0];
+        float saturation = hsv[1];
+        float value = hsv[2];
+
+        // Define hue ranges for colors. These may need slight tuning.
+        // Green hues are typically between 80 and 150.
+        boolean isGreen = (hue >= 150 && hue <= 163);
+        // Purple hues are typically between 260 and 310.
+        boolean isPurple = (hue >= 165 && hue <= 240);
+
+        // Add saturation and value checks to avoid false positives on whites/greys/blacks.
+        // The color should be saturated enough and not too dark.
+        boolean isAColor = saturation > 0.45 && value > 0.18;
+
+        return (isGreen || isPurple) && isAColor;
     }
 
+// The old ColorSensor(int, int, int) method with the while loop has been removed
+// as its logic is now correctly handled in runOpMode.
+}
 
-    private void ColorSensor(int redValue, int greenValue, int blueValue) {
-            while (opModeIsActive()) {
-                // Example RGB values
-                int R = 120, G = 200, B = 80; // Sample it's for green ball
-                int R2 = 180, G2 = 50, B2 = 200; // Sample it's for purple ball
 
-                // Check if one of the colors colors are detected
-                boolean result = isGreenOrPurple(R, G, B) || isGreenOrPurple(R2, G2, B2);
-                if (result) {
-                    telemetry.addData("Ball detected:", true);
-                    sleep(500);
-                    leftIntake.setPower(0);
-                    launchMotor.setPower(0.4);
-                } else {
-                    telemetry.addData("Ball detected:", false);
-                }
-                telemetry.update();
-            }
-        }
-    }
 
 
 

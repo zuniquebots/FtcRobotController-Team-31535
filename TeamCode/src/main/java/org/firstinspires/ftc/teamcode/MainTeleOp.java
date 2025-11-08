@@ -109,7 +109,7 @@ public class MainTeleOp extends LinearOpMode {
             // 2. Preset Speeds (Gamepad 1)
             // These buttons set the 'launchPower' to a specific value.
             if (gamepad2.a) {
-                launchPower = 0.45;
+                launchPower = 0.42;
             } else if (gamepad2.b) {
                 launchPower = 0.0; // Off
             } else if (gamepad2.x) {
@@ -150,10 +150,10 @@ public class MainTeleOp extends LinearOpMode {
 
             // --- Set ALL Motor and Servo Powers ---
             // Drive motors at 50% speed
-            leftFrontDrive.setPower(0.8*frontLeftPower);
-            rightFrontDrive.setPower(0.8*frontRightPower);
-            leftBackDrive.setPower(0.8*backLeftPower);
-            rightBackDrive.setPower(0.8*backRightPower);
+            leftFrontDrive.setPower(0.75*frontLeftPower);
+            rightFrontDrive.setPower(0.75*frontRightPower);
+            leftBackDrive.setPower(0.75*backLeftPower);
+            rightBackDrive.setPower(0.75*backRightPower);
 
             // Set final launch motor power (this is the ONLY place we set it)
             launchMotor.setPower(finalLaunchPower);

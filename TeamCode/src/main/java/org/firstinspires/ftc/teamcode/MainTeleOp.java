@@ -82,9 +82,6 @@ public class MainTeleOp extends LinearOpMode {
         waitForStart();
 
         // --- TELEOP LOOP ---
-        // --- TELEOP LOOP ---
-        // --- TELEOP LOOP ---
-        // --- TELEOP LOOP ---
         while (opModeIsActive()) {
             // --- Get Gamepad Input ---
             double drive = gamepad2.left_stick_y; // Inverted for standard FPS controls
@@ -112,13 +109,13 @@ public class MainTeleOp extends LinearOpMode {
             // 2. Preset Speeds (Gamepad 1)
             // These buttons set the 'launchPower' to a specific value.
             if (gamepad2.a) {
-                launchPower = 0.40;
+                launchPower = 0.45;
             } else if (gamepad2.b) {
                 launchPower = 0.0; // Off
             } else if (gamepad2.x) {
-                launchPower = 0.525;
+                launchPower = 0.55;
             } else if (gamepad2.y) {
-                launchPower = 0.60;
+                launchPower = 0.65;
             }
 
             // 3. Clamp the base launchPower to be within a valid forward range [0, 1]
@@ -153,10 +150,10 @@ public class MainTeleOp extends LinearOpMode {
 
             // --- Set ALL Motor and Servo Powers ---
             // Drive motors at 50% speed
-            leftFrontDrive.setPower(0.5 * frontLeftPower);
-            rightFrontDrive.setPower(0.5 * frontRightPower);
-            leftBackDrive.setPower(0.5 * backLeftPower);
-            rightBackDrive.setPower(0.5 * backRightPower);
+            leftFrontDrive.setPower(0.8*frontLeftPower);
+            rightFrontDrive.setPower(0.8*frontRightPower);
+            leftBackDrive.setPower(0.8*backLeftPower);
+            rightBackDrive.setPower(0.8*backRightPower);
 
             // Set final launch motor power (this is the ONLY place we set it)
             launchMotor.setPower(finalLaunchPower);

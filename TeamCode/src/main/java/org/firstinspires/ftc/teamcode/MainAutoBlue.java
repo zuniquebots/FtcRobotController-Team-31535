@@ -1,8 +1,31 @@
+/*   MIT License
+ *   Copyright (c) [2025] [Base 10 Assets, LLC]
+ *
+ *   Permission is hereby granted, free of charge, to any person obtaining a copy
+ *   of this software and associated documentation files (the "Software"), to deal
+ *   in the Software without restriction, including without limitation the rights
+ *   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *   copies of the Software, and to permit persons to whom the Software is
+ *   furnished to do so, subject to the following conditions:
+
+ *   The above copyright notice and this permission notice shall be included in all
+ *   copies or substantial portions of the Software.
+
+ *   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *   SOFTWARE.
+ */
+
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
@@ -37,17 +60,16 @@ For support, contact tech@gobilda.com
 -Ethan Doak
  */
 
-/**
- *
- */
+@Autonomous(name="Blue", group="Linear OpMode")
 
-public class PinPointAutonomus extends LinearOpMode {
+public class MainAutoBlue extends LinearOpMode {
 
-    com.qualcomm.hardware.gobilda.GoBildaPinpointDriver pinpointDriver; // Declare OpMode member for the Odometry Computer
+    GoBildaPinpointDriver pinpointDriver; // Declare OpMode member for the Odometry Computer
     private DcMotor leftFrontDrive, rightFrontDrive, leftBackDrive, rightBackDrive; // Assuming a 4-wheel drive
-    private DcMotor launchMotor,leftIntake,rightIntake;
-    private Servo rightServo,leftServo;
-    private final double DISTANCE_TOLERANCE = 2.0; // In millimeters, how close we need to be to stop.
+    private DcMotor launchMotor, leftIntake, rightIntake;
+    private Servo rightServo, leftServo;
+    private ColorSensor colorSensor;
+    private final double DISTANCE_TOLERANCE = 5.0; // In millimeters, how close we need to be to stop.
 
     @Override
     public void runOpMode() {
@@ -57,7 +79,7 @@ public class PinPointAutonomus extends LinearOpMode {
         //STEP 1: Initialize Hardware Settings
         initialize();
 
-        Pose2D current = new Pose2D(distanceUnit,0,    0,   angleUnit, Math.toRadians(0));  // Set the robot's initial position  - that converts an angle of 0 degrees to its equivalent value in radians.
+        Pose2D current = new Pose2D(distanceUnit, 0, 0, angleUnit, Math.toRadians(0));  // Set the robot's initial position  - that converts an angle of 0 degrees to its equivalent value in radians.
         pinpointDriver.setPosition(current);
         pinpointDriver.recalibrateIMU();
 
@@ -68,46 +90,69 @@ public class PinPointAutonomus extends LinearOpMode {
         resetRuntime();
 
         if (opModeIsActive()) {
+            leftIntake.setPower(-0.35);
+            rightIntake.setPower(-1);
 
             // STEP 2: Set the Target
-            Pose2D target  = new Pose2D(distanceUnit,-200, -200, angleUnit, Math.toRadians(0));  // Set the robot's target position
+            Pose2D target = new Pose2D(distanceUnit, 0, -650, angleUnit, Math.toRadians(0));  // Set the robot's target position
             telemetry.addData("Status", "Moving to Target");
             telemetry.addData("Current X, Y", "%.2f, %.2f", current.getX(distanceUnit), current.getY(distanceUnit));
             telemetry.addData("Target X, Y", "%.2f, %.2f", target.getX(distanceUnit), target.getY(distanceUnit));
             telemetry.update();
-            sleep(1000);  // TODO: TAKE IT OUT - DEBUGGING
 
             //STEP 3: Move to Target
-            moveToTarget(target.getX(distanceUnit), target.getY(distanceUnit), 0.0,distanceUnit,angleUnit);
+            moveToTarget(target.getX(distanceUnit), target.getY(distanceUnit), 0, distanceUnit, angleUnit);
             telemetry.addData("Status", "Reached Target");
             telemetry.update();
+            //Step 4: Check whether there are balls in the robot
+            if (opModeIsActive()) {
+                // ... (your moveToTarget2 call)
 
-            // STEP 4. INTAKE THE BALL
-            // TODO:
-
-
-            // STEP 5: CHECK THE COLOR OF THE BALL
-            ObjectColorSensor colorSensor = new ObjectColorSensor();
-            try {
-                colorSensor.runOpMode();
-            } catch (InterruptedException e) {
-                telemetry.addData("Error", "Interrupted");
+                telemetry.addData("Status", "Reached Target");
                 telemetry.update();
-                //throw new RuntimeException(e);
+
+                // --- CORRECTED CODE FOR STEP 4 ---
+                //Step 4: Check which pixel is detected
+
+                // Get the current RGB values from the sensor
+                int redValue = colorSensor.red();
+                int greenValue = colorSensor.green();
+                int blueValue = colorSensor.blue();
+
+                float[] hsvValues = new float[3];
+                android.graphics.Color.RGBToHSV(redValue, greenValue, blueValue, hsvValues);
+
+
+                if (isGreenOrPurple(hsvValues)) {
+                    telemetry.addLine("Pixel Detected: Green or Purple");
+                    // Add actions here, e.g., run launcher
+                    launchMotor.setPower(0.4);
+                    sleep(1000);
+                    leftIntake.setPower(0);
+
+                } else {
+                    telemetry.addLine("No Green or Purple Pixel Detected");
+                }
+
+                telemetry.addData("Hue", "%.1f", hsvValues[0]);
+                telemetry.addData("Saturation", "%.1f", hsvValues[1]);
+                telemetry.addData("Value", "%.1f", hsvValues[2]);
+                telemetry.addData("Status", "Autonomous Finished");
+                telemetry.update();
+                sleep(1000);
             }
 
-
-            // STEP 6: LAUNCH THE BALL
 
         }
 
 
         // The OpMode will automatically stop after the sequence above is complete.
     }
-    private void initialize(){
+
+    private void initialize() {
         // --- INITIALIZATION ---
         // (Your existing initialization code is perfect and does not need to be changed)
-        pinpointDriver = hardwareMap.get(com.qualcomm.hardware.gobilda.GoBildaPinpointDriver.class, "PinpointComputer");
+        pinpointDriver = hardwareMap.get(GoBildaPinpointDriver.class, "PinpointComputer");
 
         launchMotor = hardwareMap.get(DcMotor.class, "launchMotor");
 
@@ -121,6 +166,8 @@ public class PinPointAutonomus extends LinearOpMode {
         rightFrontDrive = hardwareMap.get(DcMotor.class, "rightFrontDrive");
         leftBackDrive = hardwareMap.get(DcMotor.class, "leftBackDrive");
         rightBackDrive = hardwareMap.get(DcMotor.class, "rightBackDrive");
+        colorSensor = hardwareMap.get(ColorSensor.class, "colorSensor");
+
 
         // Motor and Servo Directions
         leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);   // TODO: SET REVERSE
@@ -153,23 +200,24 @@ public class PinPointAutonomus extends LinearOpMode {
 
         // Pinpoint Configuration
         pinpointDriver.setOffsets(-84.0, -168.0, DistanceUnit.MM);
-        pinpointDriver.setEncoderResolution(com.qualcomm.hardware.gobilda.GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
-        pinpointDriver.setEncoderDirections(com.qualcomm.hardware.gobilda.GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
+        pinpointDriver.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
+        pinpointDriver.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.REVERSED);
         pinpointDriver.resetPosAndIMU();
 
 
     }
+
     public void moveToTarget(double targetX, double targetY, double targetHeading, DistanceUnit distanceUnit, AngleUnit angleUnit) {
         double currentX = 0.0;
         double currentY = 0.0;
-        double currentHeading =0.0;
+        double currentHeading = 0.0;
 
-        while (opModeIsActive() && !isAtTarget(targetX, targetY, targetHeading,distanceUnit,angleUnit)) {
+        while (opModeIsActive() && !isAtTarget(targetX, targetY, targetHeading, distanceUnit, angleUnit)) {
             pinpointDriver.update();
             // Get current position
             Pose2D currentPose = pinpointDriver.getPosition();
             currentX = currentPose.getX(distanceUnit);
-            currentY= currentPose.getY(distanceUnit);
+            currentY = currentPose.getY(distanceUnit);
             currentHeading = currentPose.getHeading(angleUnit);  // Angle to target relative to robot's current heading
 
             // Calculate error (distance to target)  & Calculate movement direction (angle towards target)
@@ -196,8 +244,8 @@ public class PinPointAutonomus extends LinearOpMode {
 
             // Add telemetry for debugging
             telemetry.addData("Status", "Running");
-            telemetry.addData("Target X, Y, Heading", "%.2f, %.2f,%.2f", targetX, targetY, targetHeading);
-            telemetry.addData("Current X, Y, Heading", "%.2f, %.2f,%.2f", currentX, currentY, currentHeading);
+            telemetry.addData("Target X, Y", "%.2f, %.2f,%.2f", targetX, targetY, targetHeading);
+            telemetry.addData("Current X, Y", "%.2f, %.2f,%.2f", currentX, currentY, currentHeading);
             telemetry.addData("Distance Remaining", "%.2f", distance);
             telemetry.update();
 
@@ -207,18 +255,23 @@ public class PinPointAutonomus extends LinearOpMode {
         }
 
         telemetry.addData("Status", "Arrived at Target.");
-        telemetry.addData("Target X, Y Heading", "%.2f, %.2f", targetX, targetY, targetHeading);
-        telemetry.addData("Current X, Y, Heading", "%.2f, %.2f",currentX,  currentY,currentHeading);
+        telemetry.addData("Target X, Y", "%.2f, %.2f", targetX, targetY);
+        telemetry.addData("Current X, Y", "%.2f, %.2f", currentX, currentY);
         telemetry.update();
 
         sleep(1000); // Pause for 1 second
 
         // Stop motors once target is reached
         stopMotors();
+        telemetry.addData("Status", "Stopping Motors.");
+        telemetry.update();
+        sleep(200); // Pause for 0.2 second
+
     }
+
     private boolean isAtTarget(double targetX, double targetY, double targetHeading, DistanceUnit distanceUnit, AngleUnit angleUnit) {
         // Define tolerance levels for position and heading
-        double positionTolerance = 20.0; // e.g., 20mm
+        double positionTolerance = 5.0; // e.g., 20mm
         double headingTolerance = 2.0;   // e.g., 2 degrees
 
         double currentX = pinpointDriver.getPosX(distanceUnit);
@@ -266,19 +319,52 @@ public class PinPointAutonomus extends LinearOpMode {
         backLeftPower = Range.clip(backLeftPower, -1.0, 1.0);
         backRightPower = Range.clip(backRightPower, -1.0, 1.0);
 
-        leftFrontDrive.setPower(-frontLeftPower);
-        rightFrontDrive.setPower(-frontRightPower);
+        leftFrontDrive.setPower(0.8 * -frontLeftPower);
+        rightFrontDrive.setPower(0.8 * -frontRightPower);
 
-        leftBackDrive.setPower(-backLeftPower);
-        rightBackDrive.setPower(-backRightPower);
+        leftBackDrive.setPower(0.8 * -backLeftPower);
+        rightBackDrive.setPower(0.8 * -backRightPower);
     }
 
-    private void stopMotors(){
+    private void stopMotors() {
         leftFrontDrive.setPower(0);
         rightFrontDrive.setPower(0);
         leftBackDrive.setPower(0);
         rightBackDrive.setPower(0);
     }
 
+    /**
+     * Checks if the given HSV values correspond to either green or purple.
+     * Using HSV is more reliable across different lighting conditions than RGB.
+     *
+     * @param hsv An array of floats containing Hue, Saturation, and Value.
+     * @return True if the color is confidently detected as green or purple, false otherwise.
+     */
+    public static boolean isGreenOrPurple(float[] hsv) {
+        // hsv[0] is Hue (0-360), hsv[1] is Saturation (0-1), hsv[2] is Value (0-1)
+        float hue = hsv[0];
+        float saturation = hsv[1];
+        float value = hsv[2];
+
+        // Define hue ranges for colors. These may need slight tuning.
+        // Green hues are typically between 80 and 150.
+        boolean isGreen = (hue >= 150 && hue <= 163);
+        // Purple hues are typically between 260 and 310.
+        boolean isPurple = (hue >= 165 && hue <= 240);
+
+        // Add saturation and value checks to avoid false positives on whites/greys/blacks.
+        // The color should be saturated enough and not too dark.
+        boolean isAColor = saturation > 0.45 && value > 0.18;
+
+        return (isGreen || isPurple) && isAColor;
+    }
+
+// The old ColorSensor(int, int, int) method with the while loop has been removed
+// as its logic is now correctly handled in runOpMode.
 }
+
+
+
+
+
 

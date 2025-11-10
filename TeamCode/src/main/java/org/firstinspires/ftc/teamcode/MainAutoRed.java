@@ -60,9 +60,9 @@ For support, contact tech@gobilda.com
 -Ethan Doak
  */
 
-@Autonomous(name="Main Auto", group="Linear OpMode")
+@Autonomous(name="Red", group="Linear OpMode")
 
-public class MainAUto extends LinearOpMode {
+public class MainAutoRed extends LinearOpMode {
 
     GoBildaPinpointDriver pinpointDriver; // Declare OpMode member for the Odometry Computer
     private DcMotor leftFrontDrive, rightFrontDrive, leftBackDrive, rightBackDrive; // Assuming a 4-wheel drive
@@ -94,7 +94,7 @@ public class MainAUto extends LinearOpMode {
             rightIntake.setPower(-1);
 
             // STEP 2: Set the Target
-            Pose2D target = new Pose2D(distanceUnit, 0, -400, angleUnit, Math.toRadians(0));  // Set the robot's target position
+            Pose2D target = new Pose2D(distanceUnit, 0, 650, angleUnit, Math.toRadians(0));  // Set the robot's target position
             telemetry.addData("Status", "Moving to Target");
             telemetry.addData("Current X, Y", "%.2f, %.2f", current.getX(distanceUnit), current.getY(distanceUnit));
             telemetry.addData("Target X, Y", "%.2f, %.2f", target.getX(distanceUnit), target.getY(distanceUnit));

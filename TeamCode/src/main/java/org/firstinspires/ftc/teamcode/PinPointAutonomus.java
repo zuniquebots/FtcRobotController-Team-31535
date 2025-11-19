@@ -43,7 +43,7 @@ For support, contact tech@gobilda.com
 
 public class PinPointAutonomus extends LinearOpMode {
 
-    com.qualcomm.hardware.gobilda.GoBildaPinpointDriver pinpointDriver; // Declare OpMode member for the Odometry Computer
+    GoBildaPinpointDriver pinpointDriver; // Declare OpMode member for the Odometry Computer
     private DcMotor leftFrontDrive, rightFrontDrive, leftBackDrive, rightBackDrive; // Assuming a 4-wheel drive
     private DcMotor launchMotor,leftIntake,rightIntake;
     private Servo rightServo,leftServo;
@@ -57,6 +57,7 @@ public class PinPointAutonomus extends LinearOpMode {
         //STEP 1: Initialize Hardware Settings
         initialize();
 
+        //STEP 2: Set the Current Position
         Pose2D current = new Pose2D(distanceUnit,0,    0,   angleUnit, Math.toRadians(0));  // Set the robot's initial position  - that converts an angle of 0 degrees to its equivalent value in radians.
         pinpointDriver.setPosition(current);
         pinpointDriver.recalibrateIMU();

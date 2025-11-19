@@ -6,10 +6,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
-// The @TeleOp name was "LaunchMotor", which is confusing. Renamed to "MainTeleOp" for clarity.
 @TeleOp(name = "MainTeleOp", group = "Competition")
 public class MainTeleOp extends LinearOpMode {
-
     // --- Hardware Declarations ---
     private DcMotor launchMotor;
     private DcMotor leftIntake;
@@ -20,9 +18,7 @@ public class MainTeleOp extends LinearOpMode {
     private DcMotor rightFrontDrive;
     private DcMotor leftBackDrive;
     private DcMotor rightBackDrive;
-    private double launchPower = 0;
-    private double finalLaunchPower;
-
+    private double launchPower;
 
 
     @Override
@@ -38,7 +34,6 @@ public class MainTeleOp extends LinearOpMode {
         rightFrontDrive = hardwareMap.get(DcMotor.class, "rightFrontDrive");
         leftBackDrive = hardwareMap.get(DcMotor.class, "leftBackDrive");
         rightBackDrive = hardwareMap.get(DcMotor.class, "rightBackDrive");
-        // The second mapping of launchMotor was removed.
 
         // --- SET MOTOR AND SERVO DIRECTIONS ---
         leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
@@ -53,7 +48,6 @@ public class MainTeleOp extends LinearOpMode {
         leftServo.setDirection(Servo.Direction.FORWARD);
 
         // --- SET MOTOR BEHAVIOR ---
-        // Set zero power behavior to BRAKE for more immediate stops
         leftIntake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightIntake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         launchMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -62,14 +56,7 @@ public class MainTeleOp extends LinearOpMode {
         leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-
-        // Reset encoders and set run mode for odometry
-        //sai and satvik coded all of this bro trust
-        leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
+        // --- SET MOTOR RUN MODES ---
         leftFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -84,63 +71,54 @@ public class MainTeleOp extends LinearOpMode {
         // --- TELEOP LOOP ---
         while (opModeIsActive()) {
             // --- Get Gamepad Input ---
-            double drive = gamepad2.left_stick_y; // Inverted for standard FPS controls
-            double strafe = -gamepad2.left_stick_x;
-            double turn = gamepad2.right_stick_x;
-
+            double drive = gamepad2.left_stick_y;  // Forward/Backward
+            double strafe = gamepad2.left_stick_x; // Left/Right
+            double turn = gamepad2.right_stick_x;  // Rotation
             double servoPosition = gamepad2.left_trigger;
             boolean intakeOn = gamepad2.right_bumper;
-            boolean reverseLaunch = gamepad2.left_bumper; // Button to reverse the launch motor
+            boolean reverseIntake = gamepad2.left_bumper;
+
+            // --- Gamepad 1 Launch Controls ---
+            boolean triggerLaunch = gamepad1.right_trigger > 0.1; // Full power launch
+            boolean reverseLaunch = gamepad1.left_trigger > 0.1;  // Reverse launch/intake
+
 
             // --- Launch Motor Control ---
-            // This section determines the desired power for the launch motor.
-            // We will set the actual motor power only ONCE at the end.
-
-            // 1. D-Pad fine-tuning (Gamepad 1)
-            // This adjusts the base 'launchPower' variable.
-            if (gamepad2.dpad_up) {
-                launchPower += 0.01; // Increase power
-                sleep(50); // Small delay to make adjustments smoother
-            } else if (gamepad2.dpad_down) {
-                launchPower -= 0.01; // Decrease power
+            // 1. D-Pad fine-tuning (gamepad2)
+            if (gamepad1.dpad_up) {
+                launchPower += 0.01;
+                sleep(50);
+            } else if (gamepad1.dpad_down) {
+                launchPower -= 0.01;
                 sleep(50);
             }
 
-            // 2. Preset Speeds (Gamepad 1)
-            // These buttons set the 'launchPower' to a specific value.
-            if (gamepad2.a) {
+
+            // 2. Preset Speeds (gamepad1)
+            if (gamepad1.a) {
                 launchPower = 0.42;
-            } else if (gamepad2.b) {
+            } else if (gamepad1.b) {
                 launchPower = 0.0; // Off
-            } else if (gamepad2.x) {
+            } else if (gamepad1.x) {
                 launchPower = 0.55;
-            } else if (gamepad2.y) {
+            } else if (gamepad1.y) {
                 launchPower = 0.65;
             }
 
-            // 3. Clamp the base launchPower to be within a valid forward range [0, 1]
-            if (launchPower > 1.0) {
-                launchPower = 1.0;
-            } else if (launchPower < 0.0) {
-                launchPower = 0.0;
+            // 3. Clamp the launchPower to be within a valid forward range [0, 1]
+            launchPower = Math.max(0.0, Math.min(1.0, launchPower));
+
+
+            // 4. Determine the final power command with priorities
+            double finalLaunchPower;
+            if (triggerLaunch) {
+                finalLaunchPower = 1.0; // HIGHEST PRIORITY: Full power launch
+            } else if (reverseLaunch) {
+                finalLaunchPower = -0.5; // SECOND PRIORITY: Reverse power
+            } else {
+                finalLaunchPower = launchPower; // DEFAULT: Use preset/tuned power
             }
 
-            // 4. Check for variable trigger power (Gamepad 2)
-            double triggerLaunchPower = gamepad2.right_trigger;
-
-            // 5. Determine the final power command
-            // Start with the base power set by d-pad/presets
-            double finalLaunchPower = launchPower;
-            // If the trigger is pressed, it overrides the base power
-            if (triggerLaunchPower > 0.05) {
-                finalLaunchPower = triggerLaunchPower;
-            }
-
-            // 6. HIGHEST PRIORITY: Check for reverse command
-            // If 'a' on gamepad2 is pressed, override everything and run motor backwards.
-            if (reverseLaunch) {
-                finalLaunchPower = -0.5; // Set to a negative power for reverse
-            }
 
             // --- Mecanum Drive Calculations ---
             double frontLeftPower = drive + strafe + turn;
@@ -149,21 +127,20 @@ public class MainTeleOp extends LinearOpMode {
             double backRightPower = drive + strafe - turn;
 
             // --- Set ALL Motor and Servo Powers ---
-            // Drive motors at 50% speed
-            leftFrontDrive.setPower(0.75*frontLeftPower);
-            rightFrontDrive.setPower(0.75*frontRightPower);
-            leftBackDrive.setPower(0.75*backLeftPower);
-            rightBackDrive.setPower(0.75*backRightPower);
+            // Drive motors
+            leftFrontDrive.setPower(0.75 * frontLeftPower);
+            rightFrontDrive.setPower(0.75 * frontRightPower);
+            leftBackDrive.setPower(0.75 * backLeftPower);
+            rightBackDrive.setPower(0.75 * backRightPower);
 
-            // Set final launch motor power (this is the ONLY place we set it)
+            // Set final launch motor power
             launchMotor.setPower(finalLaunchPower);
 
-            // Control servos with the left trigger
-            rightServo.setPosition(servoPosition);
-            leftServo.setPosition(servoPosition);
-
-            // Control intake motors with the right bumper
-            if (intakeOn) {
+            // Intake Motor Logic
+            if (reverseIntake){
+                leftIntake.setPower(-0.25);
+                rightIntake.setPower(-1);
+            } else if (intakeOn) {
                 leftIntake.setPower(0.25);
                 rightIntake.setPower(1);
             } else {
@@ -171,23 +148,29 @@ public class MainTeleOp extends LinearOpMode {
                 rightIntake.setPower(0);
             }
 
+
+            // Control servos with the left trigger
+            rightServo.setPosition(servoPosition);
+            leftServo.setPosition(servoPosition);
+
+
             // --- Telemetry ---
             telemetry.addData("Status", "Running");
-            telemetry.addData("Final Launch Power", "%.2f", finalLaunchPower);
-            telemetry.addData("Base (D-Pad/Preset) Power", "%.2f", launchPower);
+            telemetry.addData("Launch Power Command", "%.2f", finalLaunchPower);
+            telemetry.addData("Base Launch Power", "%.2f", launchPower);
             telemetry.addData("Intake On?", intakeOn);
-            telemetry.addData("Reverse Active?", reverseLaunch);
+            telemetry.addData("Reverse Intake?", reverseIntake);
+            telemetry.addData("Trigger Launch?", triggerLaunch);
             telemetry.update();
         }
 
-
-
-
+        // Stop all motors on exit
         leftFrontDrive.setPower(0);
         leftBackDrive.setPower(0);
         rightFrontDrive.setPower(0);
         rightBackDrive.setPower(0);
+        launchMotor.setPower(0);
+        leftIntake.setPower(0);
+        rightIntake.setPower(0);
     }
 }
-
-

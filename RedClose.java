@@ -15,14 +15,13 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants; // Replace with your actual Constants file
 
-@Autonomous(name = "BlueFarShotAuto", group = "Pedro Pathing")
-public class FarShotAuto extends LinearOpMode {
+@Autonomous(name = "RedCloseShot", group = "Pedro Pathing")
+public class RedClose extends LinearOpMode {
 
     // --- Pathing Declarations ---
     private final Pose START_POSE = new Pose(0, 0, Math.toRadians(0));
-    private final Pose FAR_SHOT_POSE = new Pose(-120, 20, Math.toRadians(95));
-    private final Pose outside = new Pose(0,50,Math.toRadians(0));
-
+    private final Pose FAR_SHOT_POSE = new Pose(-120, 0, Math.toRadians(-95));
+    private final Pose Pick_Up = new Pose(75,25,Math.toRadians(-270));
 
     // --- Hardware Declarations for Other Motors ---
     private DcMotor launchMotor;
@@ -174,7 +173,7 @@ public class FarShotAuto extends LinearOpMode {
         telemetry.update();
 
         // Example: Run the launcher at full power for 1 second
-        launchMotor.setPower(0.45);
+        launchMotor.setPower(0.55);
         sleep(1000); // Wait for 1 second
         leftServo.setPosition(1);
         rightServo.setPosition(1);
@@ -199,6 +198,5 @@ public class FarShotAuto extends LinearOpMode {
 
         telemetry.addData("Status", "Path and Actions Complete!");
         telemetry.update();
-        sleep(2000); // Pause at the end
     }
 }

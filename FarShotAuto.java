@@ -20,7 +20,7 @@ public class FarShotAuto extends LinearOpMode {
 
     // --- Pathing Declarations ---
     private final Pose START_POSE = new Pose(0, 0, Math.toRadians(0));
-    private final Pose FAR_SHOT_POSE = new Pose(-120, 20, Math.toRadians(90));
+    private final Pose FAR_SHOT_POSE = new Pose(-120, 20, Math.toRadians(95));
 
     // --- Hardware Declarations for Other Motors ---
     private DcMotor launchMotor;
@@ -179,6 +179,7 @@ public class FarShotAuto extends LinearOpMode {
         sleep(3000);
         leftServo.setPosition(0);
         rightServo.setPosition(0);
+        launchMotor.setPower(0.4);
         leftIntake.setPower(0.15);
         rightIntake.setPower(0.35);
         sleep(2000);

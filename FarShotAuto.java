@@ -15,13 +15,13 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants; // Replace with your actual Constants file
 
-@Autonomous(name = "BlueFarShotAuto", group = "Pedro Pathing")
+@Autonomous(name = "BlueNearShotAuto1", group = "PedroPathing")
 public class FarShotAuto extends LinearOpMode {
 
     // --- Pathing Declarations ---
-    private final Pose START_POSE = new Pose(0, 0, Math.toRadians(0));
-    private final Pose FAR_SHOT_POSE = new Pose(-120, 20, Math.toRadians(95));
-    private final Pose outside = new Pose(0,50,Math.toRadians(0));
+    private final Pose START_POSE = new Pose(0, 96, Math.toRadians(0));
+    private final Pose FAR_SHOT_POSE = new Pose(-120, 100, Math.toRadians(75));
+    private final Pose outside = new Pose(-55,100,Math.toRadians(0));
 
 
     // --- Hardware Declarations for Other Motors ---
@@ -42,31 +42,21 @@ public class FarShotAuto extends LinearOpMode {
         private static final float[] PURPLE_HSV_MIN = {250, 0.4f, 0.2f};
         private static final float[] PURPLE_HSV_MAX = {290, 1.0f, 1.0f};
 
-        /**
-         * Converts RGB values to HSV and checks if the color is green or purple.
-         * @param r Red component (0-255)
-         * @param g Green component (0-255)
-         * @param b Blue component (0-255)
-         * @return true if the color is within the green or purple HSV range.
-         */
         public static boolean isGreenOrPurple(int r, int g, int b) {
             float[] hsv = new float[3];
             Color.RGBToHSV(r, g, b, hsv);
 
-            // Check for Green
             if (hsv[0] >= GREEN_HSV_MIN[0] && hsv[0] <= GREEN_HSV_MAX[0] &&
                     hsv[1] >= GREEN_HSV_MIN[1] && hsv[1] <= GREEN_HSV_MAX[1] &&
                     hsv[2] >= GREEN_HSV_MIN[2] && hsv[2] <= GREEN_HSV_MAX[2]) {
                 return true;
             }
 
-            // Check for Purple
             if (hsv[0] >= PURPLE_HSV_MIN[0] && hsv[0] <= PURPLE_HSV_MAX[0] &&
                     hsv[1] >= PURPLE_HSV_MIN[1] && hsv[1] <= PURPLE_HSV_MAX[1] &&
                     hsv[2] >= PURPLE_HSV_MIN[2] && hsv[2] <= PURPLE_HSV_MAX[2]) {
                 return true;
             }
-
             return false;
         }
     }
@@ -74,131 +64,128 @@ public class FarShotAuto extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-        // *** STEP 1: INITIALIZE THE FOLLOWER AND OTHER HARDWARE ***
-
-        // Initialize the pathing follower
+        // *** INITIALIZATION ***
         Follower follower = Constants.createFollower(hardwareMap);
-
-        // Initialize your other motors and servos
-        launchMotor = hardwareMap.get(DcMotor.class, "launchMotor");
-        leftIntake = hardwareMap.get(DcMotor.class, "leftIntakeMotor");
-        rightIntake = hardwareMap.get(DcMotor.class, "rightIntakeMotor");
-        leftServo  = hardwareMap.get(Servo.class, "leftServo");
-        rightServo = hardwareMap.get(Servo.class, "rightServo");
-        colorSensor = hardwareMap.get(ColorSensor.class, "colorSensor");
-
-        // Set motor directions (adjust as needed)
-        launchMotor.setDirection(DcMotorSimple.Direction.FORWARD);
-        leftIntake.setDirection(DcMotorSimple.Direction.FORWARD);
-        rightIntake.setDirection(DcMotorSimple.Direction.FORWARD);
-
-        leftServo.setDirection(Servo.Direction.FORWARD);
-        rightServo.setDirection(Servo.Direction.REVERSE);
-
-
-        // Set zero power behavior
-        launchMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        leftIntake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightIntake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-
-        // *** STEP 2: SET THE INITIAL ROBOT POSE ***
+        initializeHardware();
         follower.setStartingPose(START_POSE);
 
-        // *** STEP 3: WAIT FOR START ***
         telemetry.addData("Status", "Initialized. Start Pose: " + START_POSE);
         telemetry.update();
         waitForStart();
 
         if (isStopRequested()) return;
 
-        // *** STEP 4: BUILD AND FOLLOW THE PATH ***
+        // *** PATH 1: DRIVE TO FAR SHOT POSE ***
         try {
-            // Build the straight path
             PathChain farShotPath = follower.pathBuilder()
-                    // Create the straight line segment
                     .addPath(new BezierLine(START_POSE, FAR_SHOT_POSE))
-                    // Define the heading change over the path
                     .setLinearHeadingInterpolation(START_POSE.getHeading(), FAR_SHOT_POSE.getHeading())
                     .build();
-
-            // Execute the path
             follower.followPath(farShotPath);
-
-            // Loop while the path is running, and control other motors simultaneously
-            while (opModeIsActive() && follower.isBusy()) {
-                // REQUIRED: Update the follower to keep the robot moving
-                follower.update();
-/*
-                // Get RGB values from the color sensor
-                int red = colorSensor.red();
-                int green = colorSensor.green();
-                int blue = colorSensor.blue();
-
-                // Check if a green or purple pixel is detected
-                if (ColorUtil.isGreenOrPurple(red, green, blue)) {
-                    telemetry.addData("Pixel Detected", true);
-                    // Slow down intake when a pixel is detected
-                    leftIntake.setPower(0.1);
-                    rightIntake.setPower(0.25);
-                    sleep(1500);
-                } else {
-                    telemetry.addData("Pixel Detected", false);
-                    // Run intake at full speed to search for a pixel
-                    leftIntake.setPower(0.35);
-                    rightIntake.setPower(1);
-                    sleep(1500);
-                }
-                */
-
-                // Telemetry for debugging
-                telemetry.addData("Status", "Following Path & Running Intake...");
-                telemetry.addData("Current Pose", follower.getPose().toString());
-                //telemetry.addData("RGB", "%d, %d, %d", red, green, blue);
-                telemetry.update();
-            }
-
-            // Stop the intake now that we've arrived
-            leftIntake.setPower(0);
-            rightIntake.setPower(0);
-
-
+            waitForPath(follower); // Wait for the path to complete
         } catch (Exception e) {
-            telemetry.addData("ERROR", "Path execution failed: " + e.getMessage());
-            telemetry.update();
-            sleep(5000); // Keep the error message on screen
+            handlePathError(e);
         }
 
-        // *** STEP 5: PERFORM ACTIONS AFTER THE PATH IS COMPLETE ***
+        // *** ACTIONS 1: SHOOT FROM FAR SHOT POSE ***
         telemetry.addData("Status", "Arrived at destination. Firing launcher!");
         telemetry.update();
+        runShooterSequence();
 
-        // Example: Run the launcher at full power for 1 second
-        launchMotor.setPower(0.45);
-        sleep(1000); // Wait for 1 second
-        leftServo.setPosition(1);
-        rightServo.setPosition(1);
-        sleep(3000);
-        leftServo.setPosition(0);
-        rightServo.setPosition(0);
-        launchMotor.setPower(0.4);
-        leftIntake.setPower(0.15);
-        rightIntake.setPower(0.35);
-        sleep(2000);
-        leftServo.setPosition(1);
-        rightServo.setPosition(1);
-        leftIntake.setPower(0);
-        rightIntake.setPower(0);
-        sleep(5000);
-        launchMotor.setPower(0); // Stop the launcher
-        leftServo.setPosition(0);
-        rightServo.setPosition(0);
-        leftIntake.setPower(0);
-        rightIntake.setPower(0.0);
+        // *** PATH 2: DRIVE TO THE 'OUTSIDE' POSE ***
+        try {
+            telemetry.addData("Status", "Driving to the outside position...");
+            telemetry.update();
+            PathChain outsidePath = follower.pathBuilder()
+                    // Start the new path from the robot's current position
+                    .addPath(new BezierLine(follower.getPose(), outside))
+                    .setLinearHeadingInterpolation(follower.getPose().getHeading(), outside.getHeading())
+                    .build();
+            follower.followPath(outsidePath);
+            waitForPath(follower); // Wait for this second path to complete
+        } catch (Exception e) {
+            handlePathError(e);
+        }
 
-
-        telemetry.addData("Status", "Path and Actions Complete!");
+        telemetry.addData("Status", "Autonomous Routine Complete!");
         telemetry.update();
         sleep(2000); // Pause at the end
+    }
+
+    /**
+     * Initializes all hardware components.
+     */
+    private void initializeHardware() {
+        launchMotor = hardwareMap.get(DcMotor.class, "launchMotor");
+        leftIntake = hardwareMap.get(DcMotor.class, "leftIntakeMotor");
+        rightIntake = hardwareMap.get(DcMotor.class, "rightIntakeMotor");
+        leftServo = hardwareMap.get(Servo.class, "leftServo");
+        rightServo = hardwareMap.get(Servo.class, "rightServo");
+        colorSensor = hardwareMap.get(ColorSensor.class, "colorSensor");
+
+        launchMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        leftIntake.setDirection(DcMotorSimple.Direction.FORWARD);
+        rightIntake.setDirection(DcMotorSimple.Direction.FORWARD);
+        leftServo.setDirection(Servo.Direction.FORWARD);
+        rightServo.setDirection(Servo.Direction.REVERSE);
+
+        launchMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftIntake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightIntake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+    }
+
+    /**
+     * Helper method to wait for a path to finish while updating the follower.
+     * @param follower The Follower instance to monitor.
+     */
+    private void waitForPath(Follower follower) {
+        while (opModeIsActive() && follower.isBusy()) {
+            follower.update();
+            telemetry.addData("Status", "Following Path...");
+            telemetry.addData("Current Pose", follower.getPose().toString());
+            telemetry.update();
+        }
+    }
+
+    /**
+     * Runs the sequence for shooting pixels.
+     */
+    private void runShooterSequence() {
+        launchMotor.setPower(0.5);
+        sleep(1000);
+        fireServos(); // First shot
+        leftIntake.setPower(0.15);
+        rightIntake.setPower(0.35);
+        launchMotor.setPower(0.4);
+        sleep(1500); // Feed second pixel
+        fireServos(); // Second shot
+        // Reset all motors
+        launchMotor.setPower(0);
+        leftIntake.setPower(0);
+        rightIntake.setPower(0);
+        leftServo.setPosition(0);
+        rightServo.setPosition(0);
+    }
+
+    /**
+     * Helper method to fire servos.
+     */
+    private void fireServos() {
+        leftServo.setPosition(1);
+        rightServo.setPosition(1);
+        sleep(1500); // Give time for servo to move
+        leftServo.setPosition(0);
+        rightServo.setPosition(0);
+        sleep(500); // Give time to return
+    }
+
+    /**
+     * Helper method to display an error and stop.
+     * @param e The exception that occurred.
+     */
+    private void handlePathError(Exception e) {
+        telemetry.addData("ERROR", "Path execution failed: " + e.getMessage());
+        telemetry.update();
+        sleep(5000); // Keep the error message on screen
     }
 }

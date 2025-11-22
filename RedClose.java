@@ -1,8 +1,7 @@
 package org.firstinspires.ftc.teamcode;
-/* this is satvik and i made
-a multi
-line
-codeee
+/* this is natvis and i made
+a multiline
+code
  */
 
 import android.graphics.Color;
@@ -20,16 +19,14 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants; // Replace with your actual Constants file
 
-@Autonomous(name = "RedCloseShot", group = "Pedro Pathing")
+@Autonomous(name = "RedNearShotAuto", group = "PedroPathing")
 public class RedClose extends LinearOpMode {
 
     // --- Pathing Declarations ---
-    private final Pose START_POSE = new Pose(0, 0, Math.toRadians(0));
-    private final Pose FAR_SHOT_POSE = new Pose(-120, 0, Math.toRadians(-95));
-    // The control point is now an intermediate destination
-    private final Pose CONTROL_DESTINATION = new Pose(-50,-15,Math.toRadians(-160));//-195
-    // Final destination for pixel pickup
-    private final Pose PICK_UP_POSE = new Pose(-50,-30,Math.toRadians(-225));//-300
+    private final Pose START_POSE = new Pose(0, 72, Math.toRadians(0));
+    private final Pose FAR_SHOT_POSE = new Pose(-120, 72, Math.toRadians(-60));
+    // The control point is now the final destination
+    private final Pose CONTROL_DESTINATION = new Pose(-75,25,Math.toRadians(20));//-195
 
 
     // --- Hardware Declarations for Other Motors ---
@@ -72,6 +69,7 @@ public class RedClose extends LinearOpMode {
         launchMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         leftIntake.setDirection(DcMotorSimple.Direction.FORWARD);
         rightIntake.setDirection(DcMotorSimple.Direction.FORWARD);
+
         leftServo.setDirection(Servo.Direction.FORWARD);
         rightServo.setDirection(Servo.Direction.REVERSE);
 
@@ -101,10 +99,10 @@ public class RedClose extends LinearOpMode {
         // *** ACTIONS 1: SHOOT FROM FAR SHOT POSE ***
         telemetry.addData("Status", "Arrived at far shot. Firing launcher!");
         telemetry.update();
-        launchMotor.setPower(0.55);
+        launchMotor.setPower(0.575);
         sleep(1000);
         fireServos();
-        launchMotor.setPower(0.45);
+        launchMotor.setPower(0.4);
         leftIntake.setPower(0.15);
         rightIntake.setPower(0.35);
         sleep(2000);
@@ -113,9 +111,9 @@ public class RedClose extends LinearOpMode {
         leftIntake.setPower(0);
         rightIntake.setPower(0);
 
-        // *** PATH 2: DRIVE TO THE INTERMEDIATE (CONTROL) DESTINATION ***
+        // *** PATH 2: DRIVE TO THE FINAL (CONTROL) DESTINATION ***
         try {
-            telemetry.addData("Status", "Driving to intermediate point...");
+            telemetry.addData("Status", "Driving to final point...");
             telemetry.update();
             PathChain intermediatePath = follower.pathBuilder()
                     .addPath(new BezierLine(follower.getPose(), CONTROL_DESTINATION))
@@ -126,31 +124,6 @@ public class RedClose extends LinearOpMode {
         } catch (Exception e) {
             handlePathError(e);
         }
-
-        // *** PATH 3: DRIVE TO THE FINAL PICK UP POSE ***
-        try {
-            telemetry.addData("Status", "Driving to pick up pixels...");
-            telemetry.update();
-            PathChain pickUpPath = follower.pathBuilder()
-                    .addPath(new BezierLine(follower.getPose(), PICK_UP_POSE))
-                    .setLinearHeadingInterpolation(follower.getPose().getHeading(), PICK_UP_POSE.getHeading())
-                    .build();
-            follower.followPath(pickUpPath);
-            waitForPath(follower);
-        } catch (Exception e) {
-            handlePathError(e);
-        }
-
-
-        // *** ACTIONS 2: PICK UP PIXELS ***
-        telemetry.addData("Status", "Arrived at pick up. Running intake.");
-        telemetry.update();
-        leftIntake.setPower(0.35);
-        rightIntake.setPower(1.0);
-        sleep(2000); // Run intake for 2 seconds
-        leftIntake.setPower(0);
-        rightIntake.setPower(0);
-
 
         telemetry.addData("Status", "Autonomous Routine Complete!");
         telemetry.update();

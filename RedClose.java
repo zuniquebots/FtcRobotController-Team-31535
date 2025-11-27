@@ -1,8 +1,4 @@
 package org.firstinspires.ftc.teamcode;
-/* this is natvis and i made
-a multiline
-code
- */
 
 import android.graphics.Color;
 
@@ -17,16 +13,16 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
-import org.firstinspires.ftc.teamcode.pedroPathing.Constants; // Replace with your actual Constants file
+import org.firstinspires.ftc.teamcode.pedroPathing.Constants1; // Replace with your actual Constants file
 
-@Autonomous(name = "RedNearShotAuto", group = "PedroPathing")
+@Autonomous(name = "Red Near Shot Auto", group = "PedroPathing")
 public class RedClose extends LinearOpMode {
 
     // --- Pathing Declarations ---
-    private final Pose START_POSE = new Pose(0, 72, Math.toRadians(0));
-    private final Pose FAR_SHOT_POSE = new Pose(-120, 72, Math.toRadians(-60));
+    private final Pose START_POSE = new Pose(8, 80, Math.toRadians(90));
+    private final Pose FAR_SHOT_POSE = new Pose(22, 80, Math.toRadians(70));
     // The control point is now the final destination
-    private final Pose CONTROL_DESTINATION = new Pose(-75,25,Math.toRadians(20));//-195
+    private final Pose CONTROL_DESTINATION = new Pose(35,120,Math.toRadians(0));//-195
 
 
     // --- Hardware Declarations for Other Motors ---
@@ -58,13 +54,17 @@ public class RedClose extends LinearOpMode {
     public void runOpMode() {
 
         // *** INITIALIZATION ***
-        Follower follower = Constants.createFollower(hardwareMap);
+        Follower follower = Constants1.createFollower(hardwareMap);
         launchMotor = hardwareMap.get(DcMotor.class, "launchMotor");
+
         leftIntake = hardwareMap.get(DcMotor.class, "leftIntakeMotor");
         rightIntake = hardwareMap.get(DcMotor.class, "rightIntakeMotor");
+
         leftServo  = hardwareMap.get(Servo.class, "leftServo");
         rightServo = hardwareMap.get(Servo.class, "rightServo");
+
         colorSensor = hardwareMap.get(ColorSensor.class, "colorSensor");
+
 
         launchMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         leftIntake.setDirection(DcMotorSimple.Direction.FORWARD);

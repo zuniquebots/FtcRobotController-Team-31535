@@ -10,28 +10,29 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants11;
 
-@Autonomous(name = "PedroPathing1 Blue", group = "Pedro Pathing")
-public class PedroPathingStarter1 extends OpMode {
+@Autonomous(name = "Pedro Pathing Starter Red 1", group = "Pedro Pathing")
+public class PedroPathingStarterRed11 extends OpMode {
 
     private Follower follower;
     private int currentState;
     private AutonomousPaths paths;
     private ElapsedTime pauseTimer = new ElapsedTime();
 
-    // ------------ CORRECTED POSES ------------
-    public static final Pose START_POSE = new Pose(63, 9, Math.toRadians(90));
-    public static final Pose SHOOT_POSE = new Pose(62, 20, Math.toRadians(65));
+    // ------------ CORRECTED POSES (RED) ------------
+    public static final Pose START_POSE = new Pose(81, 9, Math.toRadians(90));
+    public static final Pose SHOOT_POSE = new Pose(82, 20, Math.toRadians(115));
 
-    // The robot will now turn to 0 degrees AS it drives to this pose.
-    public static final Pose COLLECT_POSE1 = new Pose(42, 35, Math.toRadians(0));
-    public static final Pose COLLECT_POSE2 = new Pose(42, 60, Math.toRadians(0));
-    public static final Pose COLLECT_POSE3 = new Pose(42, 85, Math.toRadians(0));
+    // The robot will now turn to 180 degrees AS it drives to these poses.
+    public static final Pose COLLECT_POSE1 = new Pose(100, 35, Math.toRadians(180));
+    public static final Pose COLLECT_POSE2 = new Pose(100, 60, Math.toRadians(180));
+    public static final Pose COLLECT_POSE3 = new Pose(100, 85, Math.toRadians(180));
 
 
     @Override
     public void init() {
         follower = Constants11.createFollower(hardwareMap);
         follower.setStartingPose(START_POSE);
+
         follower.setMaxPower(0.8);
 
         paths = new AutonomousPaths(follower);

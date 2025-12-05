@@ -1,19 +1,19 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.pedropathing.follower.Follower;import com.pedropathing.geometry.BezierLine;
+import com.pedropathing.follower.Follower;
+import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Servo; // Import the Servo class
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@Autonomous(name = "Blue Auto Pathing", group = "Pedro Pathing")
-public class PedroPathingStarter_BlueImpl extends OpMode {
+@Autonomous(name = "Blue Auto Pathing Close", group = "Pedro Pathing")
+public class PedroPathingStarter_BlueClose extends OpMode {
 
     private Follower follower;
     private int currentState;
@@ -33,15 +33,15 @@ public class PedroPathingStarter_BlueImpl extends OpMode {
     // ------------ CORRECTED POSES ------------
     // START_POSE and SHOOT_POSE have been adjusted
     public static final Pose START_POSE = new Pose(62, 135, Math.toRadians(90));
-    public static final Pose SHOOT_POSE = new Pose(59, 95, Math.toRadians(55));
+    public static final Pose SHOOT_POSE = new Pose(25, 120, Math.toRadians(45));
     // New shooting pose for subsequent shots
-    public static final Pose Shoot_Pose_1 = new Pose(59, 95, Math.toRadians(-55));
+    public static final Pose Shoot_Pose_1 = new Pose(25, 120, Math.toRadians(-45));
 
 
     // Staging poses for collection
     public static final Pose COLLECT_POSE1 = new Pose(42, 35, Math.toRadians(0));
     public static final Pose COLLECT_POSE2 = new Pose(42, 60, Math.toRadians(0));
-    public static final Pose COLLECT_POSE3 = new Pose(42, 85, Math.toRadians(0));
+    public static final Pose COLLECT_POSE3 = new Pose(45, 85, Math.toRadians(0));
     // Actual collection poses
     public static final Pose Actual_Collect3= new Pose(20, 85, Math.toRadians(0));
     public static final Pose Actual_Collect2= new Pose(20, 60, Math.toRadians(0));
@@ -97,8 +97,8 @@ public class PedroPathingStarter_BlueImpl extends OpMode {
         // --- START INTAKE AT FULL POWER ---
         leftIntake.setPower(0);
         rightIntake.setPower(0);
-        launchMotor.setPower(0.5);
-        directionServo.setPosition(0.22);
+        launchMotor.setPower(0.4);
+        directionServo.setPosition(0.04);
         matchTimer.reset(); // Start the master match timer
         telemetry.addData("Status", "Autonomous Started");
         telemetry.update();
@@ -110,7 +110,7 @@ public class PedroPathingStarter_BlueImpl extends OpMode {
         follower.update();
 
         // Master timer check for parking is kept, in case the first move takes too long
-        if (matchTimer.seconds() > 26.5 && currentState != 100 && currentState != 101) {
+        if (matchTimer.seconds() > 29.5 && currentState != 100 && currentState != 101) {
             follower.setMaxPower(1);
             // Stop all motors immediately
             launchMotor.setPower(0);
@@ -285,7 +285,7 @@ public class PedroPathingStarter_BlueImpl extends OpMode {
             case 12: // Retract servo and drive to Staging 2
                 leftIntake.setPower(0);
                 rightIntake.setPower(0);
-                if (pauseTimer.seconds() >= 2.5) {
+                if (pauseTimer.seconds() >= 1.75) {
                     rightServo.setPosition(0);
                     leftServo.setPosition(0);
                     follower.followPath(paths.driveToStagingCollect2);
@@ -332,7 +332,7 @@ public class PedroPathingStarter_BlueImpl extends OpMode {
                 leftIntake.setPower(0.25);
                 rightIntake.setPower(1);
                 // Retract servo, wait for load
-                if (pauseTimer.seconds() >= 0.5) {
+                if (pauseTimer.seconds() >= 1.5) {
                     rightServo.setPosition(0);
                     leftServo.setPosition(0);
                     pauseTimer.reset();
@@ -340,7 +340,7 @@ public class PedroPathingStarter_BlueImpl extends OpMode {
                 }
                 break;
             case 18: // Wait for load, then shoot SECOND ball
-                if (pauseTimer.seconds() >= 2.5) {
+                if (pauseTimer.seconds() >= 0.5) {
                     rightServo.setPosition(1.0);
                     leftServo.setPosition(1.0);
                     pauseTimer.reset();

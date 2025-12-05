@@ -14,16 +14,31 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants()
-            .mass(9.8)
+            .mass(10.9)
             .forwardZeroPowerAcceleration(-31.15121088813849)
             .lateralZeroPowerAcceleration(-48.66403338955584)
-            .translationalPIDFCoefficients(new PIDFCoefficients(0.005,0,0.025,0.028))
-            .headingPIDFCoefficients(new PIDFCoefficients( 0.001,0,0.009,0.028))  //0.030
-            .drivePIDFCoefficients(new FilteredPIDFCoefficients(1.25,0,0.0003,0.6,0.028))
-            .centripetalScaling(0.5)
+            /*.translationalPIDFCoefficients(new PIDFCoefficients(
+                    0.03,
+                    0,
+                    0,
+                    0.015
+            ))
             .translationalPIDFSwitch(4)
-            .drivePIDFSwitch(15);
+            .headingPIDFCoefficients(new PIDFCoefficients(
+                    0.8,
+                    0,
+                    0,
+                    0.01
+            ))*/
 
+
+            .translationalPIDFCoefficients(new PIDFCoefficients(0.005,0,0.005,0.028))
+            .headingPIDFCoefficients(new PIDFCoefficients( 0.03,0,0.08,0.028))  //0.028
+            .drivePIDFCoefficients(new FilteredPIDFCoefficients(1.7,0,0.03,0.1,0.028))
+            .centripetalScaling(0.005)
+            .translationalPIDFSwitch(1)  //Backup: 1
+            .headingPIDFSwitch(10)
+            .drivePIDFSwitch(1);
 
     public static MecanumConstants driveConstants = new MecanumConstants()
             .maxPower(1)
@@ -67,10 +82,10 @@ public class Constants {
     public static PathConstraints pathConstraints = new PathConstraints(
             0.99,
             0.1,
-            0.1,
+            0.001,
             0.009,
             500,
-            1.8,
+            2,
             10,
             1
     );

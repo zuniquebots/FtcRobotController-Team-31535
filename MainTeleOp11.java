@@ -4,6 +4,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 @TeleOp(name = "MainTeleOp", group = "Competition")
 public class MainTeleOp11 extends LinearOpMode {
@@ -50,7 +51,7 @@ public class MainTeleOp11 extends LinearOpMode {
         rightBackDrive.setDirection(DcMotor.Direction.REVERSE);
 
         launchMotor.setDirection(DcMotor.Direction.FORWARD);
-        rightIntake.setDirection(DcMotor.Direction.FORWARD);
+        rightIntake.setDirection(DcMotor.Direction.REVERSE);
         leftIntake.setDirection(DcMotor.Direction.FORWARD);
 
         rightServo.setDirection(Servo.Direction.REVERSE);
@@ -110,17 +111,28 @@ public class MainTeleOp11 extends LinearOpMode {
             // 2. Preset Speeds (gamepad1)
             if (gamepad1.a) {
                 launchPower = 0.42;
+                dirServoPos=0.04;
             } else if (gamepad1.b) {
                 launchPower = 0.0; // Off
+                dirServoPos = 0.16;
             } else if (gamepad1.x) {
-                launchPower = 0.55;
+                launchPower = 0.72;
+                dirServoPos = 0.22;
             } else if (gamepad1.y) {
-                launchPower = 0.65;
+                launchPower = 0.58;
+                dirServoPos = 0.22;
             }
-
             // 3. Clamp the launchPower to be within a valid forward range [0, 1]
             launchPower = Math.max(0.0, Math.min(1.0, launchPower));
+            if (gamepad1.dpad_right) {
+                dirServoPos -= 0.02; // Increase position
+                sleep(50); // Add a short delay to prevent rapid changes
+            } else if (gamepad1.dpad_left) {
+                dirServoPos += 0.02; // Decrease position
+                sleep(50);
+            }
 
+            dirServoPos = Math.max(0.0, Math.min(1.0, dirServoPos));
 
             // 4. Determine the final power command with priorities
             double finalLaunchPower;

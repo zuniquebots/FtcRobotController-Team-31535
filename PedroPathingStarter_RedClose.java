@@ -12,8 +12,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@Autonomous(name = "Red Auto Pathing", group = "Pedro Pathing")
-public class PedroPathingStarter_RedImpl extends OpMode {
+@Autonomous(name = "Red Auto Pathing Close", group = "Pedro Pathing")
+public class PedroPathingStarter_RedClose extends OpMode {
 
     private Follower follower;
     private int currentState;
@@ -33,15 +33,15 @@ public class PedroPathingStarter_RedImpl extends OpMode {
     // ------------ CORRECTED POSES ------------
     // START_POSE and SHOOT_POSE have been adjusted
     public static final Pose START_POSE = new Pose(82, 135, Math.toRadians(90));
-    public static final Pose SHOOT_POSE = new Pose(85, 95, Math.toRadians(140));
+    public static final Pose SHOOT_POSE = new Pose(119, 120, Math.toRadians(135));
     // New shooting pose for subsequent shots
-    public static final Pose Shoot_Pose_1 = new Pose(85, 95, Math.toRadians(-130));
+    public static final Pose Shoot_Pose_1 = new Pose(119, 120, Math.toRadians(-135));
 
 
     // Staging poses for collection
     public static final Pose COLLECT_POSE1 = new Pose(101, 35, Math.toRadians(180));
     public static final Pose COLLECT_POSE2 = new Pose(101, 60, Math.toRadians(180));
-    public static final Pose COLLECT_POSE3 = new Pose(101, 85, Math.toRadians(180));
+    public static final Pose COLLECT_POSE3 = new Pose(98, 85, Math.toRadians(180));
     // Actual collection poses
     public static final Pose Actual_Collect3= new Pose(120, 85, Math.toRadians(180));
     public static final Pose Actual_Collect2= new Pose(120, 60, Math.toRadians(180));
@@ -97,8 +97,8 @@ public class PedroPathingStarter_RedImpl extends OpMode {
         // --- START INTAKE AT FULL POWER ---
         leftIntake.setPower(0);
         rightIntake.setPower(0);
-        launchMotor.setPower(0.5);
-        directionServo.setPosition(0.22);
+        launchMotor.setPower(0.42);
+        directionServo.setPosition(0.04);
         matchTimer.reset(); // Start the master match timer
         telemetry.addData("Status", "Autonomous Started");
         telemetry.update();
@@ -200,7 +200,7 @@ public class PedroPathingStarter_RedImpl extends OpMode {
                 }
                 break;
             case 3:
-                leftIntake.setPower(0.2);
+                leftIntake.setPower(0.25);
                 rightIntake.setPower(1);
                 // Wait for first servo push, then retract to load second ball
                 if (pauseTimer.seconds() >= 0.5) { // Wait 0.5s for servo to extend
@@ -211,7 +211,7 @@ public class PedroPathingStarter_RedImpl extends OpMode {
                 }
                 break;
             case 4: // Wait for second ball to load, then shoot SECOND ball
-                if (pauseTimer.seconds() >= 1.0) { // Wait for ball to settle
+                if (pauseTimer.seconds() >= 1.75) { // Wait for ball to settle
                     rightServo.setPosition(1.0); // Push servo to shoot again
                     leftServo.setPosition(1.0);
                     pauseTimer.reset(); // Reset timer for second servo action
@@ -264,7 +264,7 @@ public class PedroPathingStarter_RedImpl extends OpMode {
                 }
                 break;
             case 10:
-                leftIntake.setPower(0.2);
+                leftIntake.setPower(0.25);
                 rightIntake.setPower(1);
                 // Retract servo, wait for load
                 if (pauseTimer.seconds() >= 0.5) {
@@ -329,7 +329,7 @@ public class PedroPathingStarter_RedImpl extends OpMode {
                 }
                 break;
             case 17:
-                leftIntake.setPower(0.2);
+                leftIntake.setPower(0.25);
                 rightIntake.setPower(1);
                 // Retract servo, wait for load
                 if (pauseTimer.seconds() >= 1.5) {
@@ -402,7 +402,7 @@ public class PedroPathingStarter_RedImpl extends OpMode {
                 }
                 break;
             case 25: // Wait for load, then shoot SECOND ball
-                leftIntake.setPower(0.2);
+                leftIntake.setPower(0.25);
                 rightIntake.setPower(1);
                 if (pauseTimer.seconds() >= 1.5) {
                     rightServo.setPosition(1.0);

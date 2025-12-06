@@ -9,12 +9,16 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
+
 
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
+
 
 @Autonomous(name = "Red Auto Pathing", group = "Pedro Pathing")
 public class PedroPathingStarter_RedImpl extends OpMode {
 
+    private VoltageSensor voltageSensor;
     private Follower follower;
     private int currentState;
     private AutonomousPaths paths;
@@ -43,9 +47,9 @@ public class PedroPathingStarter_RedImpl extends OpMode {
     public static final Pose COLLECT_POSE2 = new Pose(101, 60, Math.toRadians(180));
     public static final Pose COLLECT_POSE3 = new Pose(101, 85, Math.toRadians(180));
     // Actual collection poses
-    public static final Pose Actual_Collect3= new Pose(120, 85, Math.toRadians(180));
-    public static final Pose Actual_Collect2= new Pose(120, 60, Math.toRadians(180));
-    public static final Pose Actual_Collect1= new Pose(120, 35, Math.toRadians(180));
+    public static final Pose Actual_Collect3= new Pose(118, 85, Math.toRadians(180));
+    public static final Pose Actual_Collect2= new Pose(118, 60, Math.toRadians(180));
+    public static final Pose Actual_Collect1= new Pose(118, 35, Math.toRadians(180));
 
     // Parking pose, corrected typo
     public static final Pose Outside_Pose = new Pose(120, 64, Math.toRadians(180));
@@ -58,6 +62,7 @@ public class PedroPathingStarter_RedImpl extends OpMode {
         follower.setMaxPower(0.9);
 
         // --- Initialize Hardware ---
+        voltageSensor = hardwareMap.get(VoltageSensor.class, "Control Hub");
         launchMotor = hardwareMap.get(DcMotor.class, "launchMotor");
         leftIntake = hardwareMap.get(DcMotor.class, "leftIntakeMotor");
         rightIntake = hardwareMap.get(DcMotor.class, "rightIntakeMotor");
@@ -116,6 +121,8 @@ public class PedroPathingStarter_RedImpl extends OpMode {
             launchMotor.setPower(0);
             leftIntake.setPower(0);
             rightIntake.setPower(0);
+            leftServo.setPosition(0);
+            rightServo.setPosition(0);
 
             // Create a new path from the current pose to the parking pose
             PathChain parkPath = follower.pathBuilder()
@@ -124,6 +131,9 @@ public class PedroPathingStarter_RedImpl extends OpMode {
                     .build();
             follower.followPath(parkPath);
             currentState = 100; // Go to a dedicated "parking" state
+
+            double batteryVoltage = voltageSensor.getVoltage();
+            telemetry.addData("Battery Voltage", "%.2f V", batteryVoltage);
         }
 
 
@@ -200,7 +210,7 @@ public class PedroPathingStarter_RedImpl extends OpMode {
                 }
                 break;
             case 3:
-                leftIntake.setPower(0.2);
+                leftIntake.setPower(0.3);
                 rightIntake.setPower(1);
                 // Wait for first servo push, then retract to load second ball
                 if (pauseTimer.seconds() >= 0.5) { // Wait 0.5s for servo to extend
@@ -264,7 +274,7 @@ public class PedroPathingStarter_RedImpl extends OpMode {
                 }
                 break;
             case 10:
-                leftIntake.setPower(0.2);
+                leftIntake.setPower(0.3);
                 rightIntake.setPower(1);
                 // Retract servo, wait for load
                 if (pauseTimer.seconds() >= 0.5) {
@@ -329,7 +339,7 @@ public class PedroPathingStarter_RedImpl extends OpMode {
                 }
                 break;
             case 17:
-                leftIntake.setPower(0.2);
+                leftIntake.setPower(0.3);
                 rightIntake.setPower(1);
                 // Retract servo, wait for load
                 if (pauseTimer.seconds() >= 1.5) {
@@ -402,7 +412,7 @@ public class PedroPathingStarter_RedImpl extends OpMode {
                 }
                 break;
             case 25: // Wait for load, then shoot SECOND ball
-                leftIntake.setPower(0.2);
+                leftIntake.setPower(0.3);
                 rightIntake.setPower(1);
                 if (pauseTimer.seconds() >= 1.5) {
                     rightServo.setPosition(1.0);
